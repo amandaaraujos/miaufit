@@ -5,7 +5,8 @@ const screens = {
   workout: document.getElementById("workoutScreen"),
   history: document.getElementById("historyScreen"),
   settings: document.getElementById("settingsScreen"),
-  rest: document.getElementById("restScreen")
+  rest: document.getElementById("restScreen"),
+  exercisesSettings: document.getElementById("exercisesSettingsScreen")
 };
 
 const modal = document.getElementById("welcomeModal");
@@ -16,6 +17,7 @@ let currentUser = null;
 let currentWorkout = [];
 let currentExerciseIndex = 0;
 let currentSet = 1;
+
 let restInterval = null;
 
 function hideAllScreens() {
@@ -26,18 +28,23 @@ function hideAllScreens() {
 
 function showLogin() {
   modal.classList.remove("active");
+
   hideAllScreens();
+
   screens.login.classList.remove("hidden");
 }
 
 function showRegister() {
   modal.classList.remove("active");
+
   hideAllScreens();
+
   screens.register.classList.remove("hidden");
 }
 
 function showHome() {
   hideAllScreens();
+
   screens.home.classList.remove("hidden");
 
   loadHome();
@@ -45,6 +52,7 @@ function showHome() {
 
 function showHistory() {
   hideAllScreens();
+
   screens.history.classList.remove("hidden");
 
   loadHistory();
@@ -52,9 +60,18 @@ function showHistory() {
 
 function showSettings() {
   hideAllScreens();
+
   screens.settings.classList.remove("hidden");
 
   loadSettings();
+}
+
+function showExercisesSettings() {
+  hideAllScreens();
+
+  screens.exercisesSettings.classList.remove("hidden");
+
+  loadExercisesSettings();
 }
 
 document.querySelectorAll("#trainingDays button").forEach(button => {
@@ -63,9 +80,11 @@ document.querySelectorAll("#trainingDays button").forEach(button => {
 
     if (selectedDays.includes(day)) {
       selectedDays = selectedDays.filter(d => d !== day);
+
       button.classList.remove("active");
     } else {
       selectedDays.push(day);
+
       button.classList.add("active");
     }
   });
@@ -91,14 +110,15 @@ function addExercise() {
   const container = document.getElementById("exerciseList");
 
   const div = document.createElement("div");
+
   div.className = "exercise-item";
 
   div.innerHTML = `
-    <h4>Exercício</h4>
+    <h4>Novo exercício</h4>
 
     <input class="exercise-name" placeholder="Nome do exercício" />
 
-    <input class="exercise-weight" type="number" placeholder="Peso utilizado" />
+    <input class="exercise-weight" type="number" placeholder="Peso utilizado em kg" />
 
     <input class="exercise-sets" type="number" placeholder="Quantidade de séries" />
 
@@ -111,13 +131,21 @@ function addExercise() {
 }
 
 function createAccount() {
-  const name = document.getElementById("registerName").value.trim();
-  const email = document.getElementById("registerEmail").value.trim();
-  const password = document.getElementById("registerPassword").value;
+  const name =
+    document.getElementById("registerName").value.trim();
+
+  const email =
+    document.getElementById("registerEmail").value.trim();
+
+  const password =
+    document.getElementById("registerPassword").value;
+
   const confirmPassword =
     document.getElementById("registerConfirmPassword").value;
 
-  const trainingType = document.getElementById("trainingType").value;
+  const trainingType =
+    document.getElementById("trainingType").value;
+
   const knowledgeLevel =
     document.getElementById("knowledgeLevel").value;
 
@@ -137,17 +165,20 @@ function createAccount() {
     document.getElementById("muscleGroup").value;
 
   if (!name || !email || !password) {
-    alert("Preencha todos os campos.");
+    alert("Preencha os dados principais da conta.");
+
     return;
   }
 
   if (!validateEmail(email)) {
     alert("Digite um e-mail válido.");
+
     return;
   }
 
   if (password !== confirmPassword) {
     alert("As senhas não coincidem.");
+
     return;
   }
 
@@ -179,7 +210,10 @@ function createAccount() {
     history: []
   };
 
-  localStorage.setItem("miaufitUser", JSON.stringify(user));
+  localStorage.setItem(
+    "miaufitUser",
+    JSON.stringify(user)
+  );
 
   alert("Conta criada com sucesso 💪");
 
@@ -187,43 +221,91 @@ function createAccount() {
 }
 
 function login() {
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
+  const email =
+    document.getElementById("loginEmail").value;
 
-  const user = JSON.parse(localStorage.getItem("miaufitUser"));
+  const password =
+    document.getElementById("loginPassword").value;
+
+  const user =
+    JSON.parse(localStorage.getItem("miaufitUser"));
 
   if (!user) {
     alert("Nenhuma conta encontrada.");
+
     return;
   }
 
-  if (user.email !== email || user.password !== password) {
+  if (
+    user.email !== email ||
+    user.password !== password
+  ) {
     alert("E-mail ou senha incorretos.");
+
     return;
   }
 
   currentUser = user;
 
-  showHome();
+  saveSession();
 
   scheduleReminder();
+
+  showHome();
 }
 
 function logout() {
   currentUser = null;
+
+  localStorage.removeItem("miaufitLoggedEmail");
 
   hideAllScreens();
 
   modal.classList.add("active");
 }
 
+function saveSession() {
+  localStorage.setItem(
+    "miaufitLoggedEmail",
+    currentUser.email
+  );
+}
+
+function loadSession() {
+  const loggedEmail =
+    localStorage.getItem("miaufitLoggedEmail");
+
+  const user =
+    JSON.parse(localStorage.getItem("miaufitUser"));
+
+  if (
+    loggedEmail &&
+    user &&
+    user.email === loggedEmail
+  ) {
+    currentUser = user;
+
+    modal.classList.remove("active");
+
+    showHome();
+  }
+}
+
 function loadHome() {
-  const greeting = document.getElementById("homeGreeting");
+  const greeting =
+    document.getElementById("homeGreeting");
+
   const todayWorkoutName =
     document.getElementById("todayWorkoutName");
 
   const restActions =
     document.getElementById("restDayActions");
+
+  const startButton =
+    document.getElementById("startWorkoutButton");
+
+  const homeGoalsInfo =
+    document.getElementById("homeGoalsInfo");
 
   greeting.innerText = `Oi, ${currentUser.name} 🐾`;
 
@@ -244,13 +326,33 @@ function loadHome() {
 
     todayWorkoutName.innerText = workoutText;
 
+    startButton.disabled = false;
+
+    startButton.innerText =
+      "Iniciar treino do dia";
+
+    startButton.style.opacity = "1";
+
     restActions.classList.add("hidden");
   } else {
     todayWorkoutName.innerText =
-      "Hoje é um dia de descanso.";
+      "Hoje é dia de descanso 🧘";
+
+    startButton.disabled = true;
+
+    startButton.innerText =
+      "Sem treino programado hoje";
+
+    startButton.style.opacity = "0.5";
 
     restActions.classList.remove("hidden");
   }
+
+  homeGoalsInfo.innerHTML = `
+    💧 Meta diária de água: ${currentUser.waterGoal || 0}ml <br>
+    ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg <br>
+    🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
+  `;
 
   loadLastWorkout();
 }
@@ -262,11 +364,14 @@ function loadLastWorkout() {
   if (!currentUser.history.length) {
     lastWorkoutInfo.innerText =
       "Você ainda não registrou treinos.";
+
     return;
   }
 
   const last =
-    currentUser.history[currentUser.history.length - 1];
+    currentUser.history[
+      currentUser.history.length - 1
+    ];
 
   lastWorkoutInfo.innerHTML = `
     <strong>${last.type}</strong><br>
@@ -279,10 +384,12 @@ function startWorkout() {
 
   if (!currentWorkout.length) {
     alert("Nenhum exercício cadastrado.");
+
     return;
   }
 
   currentExerciseIndex = 0;
+
   currentSet = 1;
 
   openExercise();
@@ -293,22 +400,28 @@ function openExercise() {
 
   screens.workout.classList.remove("hidden");
 
-  const exercise = currentWorkout[currentExerciseIndex];
+  const exercise =
+    currentWorkout[currentExerciseIndex];
 
-  document.getElementById("currentExerciseName").innerText =
-    exercise.name;
+  document.getElementById(
+    "currentExerciseName"
+  ).innerText = exercise.name;
 
-  document.getElementById("currentSet").innerText =
-    `${currentSet}/${exercise.sets}`;
+  document.getElementById(
+    "currentSet"
+  ).innerText = `${currentSet}/${exercise.sets}`;
 
-  document.getElementById("currentReps").innerText =
-    exercise.reps;
+  document.getElementById(
+    "currentReps"
+  ).innerText = exercise.reps;
 
-  document.getElementById("currentWeight").innerText =
-    `${exercise.weight}kg`;
+  document.getElementById(
+    "currentWeight"
+  ).innerText = `${exercise.weight}kg`;
 
-  document.getElementById("exerciseVideo").href =
-    "https://youtube.com";
+  document.getElementById(
+    "exerciseVideo"
+  ).href = "https://youtube.com";
 }
 
 function pauseSet() {
@@ -317,12 +430,15 @@ function pauseSet() {
   );
 
   if (reps) {
-    alert(`Série pausada com ${reps} repetições.`);
+    alert(
+      `Série pausada com ${reps} repetições registradas.`
+    );
   }
 }
 
 function finishSet() {
-  const exercise = currentWorkout[currentExerciseIndex];
+  const exercise =
+    currentWorkout[currentExerciseIndex];
 
   startRest(exercise.rest);
 }
@@ -332,11 +448,14 @@ function startRest(seconds) {
 
   screens.rest.classList.remove("hidden");
 
-  const timer = document.getElementById("restTimer");
+  const timer =
+    document.getElementById("restTimer");
 
   let remaining = seconds;
 
   timer.innerText = remaining;
+
+  clearInterval(restInterval);
 
   restInterval = setInterval(() => {
     remaining--;
@@ -364,7 +483,8 @@ function startRest(seconds) {
 }
 
 function goNext() {
-  const exercise = currentWorkout[currentExerciseIndex];
+  const exercise =
+    currentWorkout[currentExerciseIndex];
 
   if (currentSet < exercise.sets) {
     currentSet++;
@@ -386,8 +506,11 @@ function goNext() {
 
   currentSet = 1;
 
-  if (currentExerciseIndex >= currentWorkout.length) {
+  if (
+    currentExerciseIndex >= currentWorkout.length
+  ) {
     finishWorkout();
+
     return;
   }
 
@@ -398,10 +521,14 @@ function finishWorkout() {
   const workout = {
     type:
       currentUser.trainingType +
-      (currentUser.muscleGroup
-        ? ` - ${currentUser.muscleGroup}`
-        : ""),
-    date: new Date().toLocaleDateString("pt-BR")
+      (
+        currentUser.muscleGroup
+          ? ` - ${currentUser.muscleGroup}`
+          : ""
+      ),
+
+    date:
+      new Date().toLocaleDateString("pt-BR")
   };
 
   currentUser.history.push(workout);
@@ -419,7 +546,9 @@ function finishWorkout() {
 function registerExtraWorkout(type) {
   const workout = {
     type,
-    date: new Date().toLocaleDateString("pt-BR")
+
+    date:
+      new Date().toLocaleDateString("pt-BR")
   };
 
   currentUser.history.push(workout);
@@ -447,53 +576,70 @@ function loadHistory() {
     return;
   }
 
-  currentUser.history.forEach(item => {
-    const div = document.createElement("div");
+  currentUser.history
+    .slice()
+    .reverse()
+    .forEach(item => {
+      const div = document.createElement("div");
 
-    div.className = "history-item";
+      div.className = "history-item";
 
-    div.innerHTML = `
-      <strong>${item.type}</strong>
-      <span>${item.date}</span>
-    `;
+      div.innerHTML = `
+        <strong>${item.type}</strong>
+        <span>${item.date}</span>
+      `;
 
-    container.appendChild(div);
-  });
+      container.appendChild(div);
+    });
 }
 
 function loadSettings() {
-  document.getElementById("settingsName").value =
-    currentUser.name;
+  document.getElementById(
+    "settingsName"
+  ).value = currentUser.name;
 
-  document.getElementById("settingsEmail").value =
-    currentUser.email;
+  document.getElementById(
+    "settingsEmail"
+  ).value = currentUser.email;
 
-  document.getElementById("settingsWaterGoal").value =
-    currentUser.waterGoal;
+  document.getElementById(
+    "settingsWaterGoal"
+  ).value = currentUser.waterGoal;
 
-  document.getElementById("settingsGoalWeight").value =
-    currentUser.goalWeight;
+  document.getElementById(
+    "settingsGoalWeight"
+  ).value = currentUser.goalWeight;
 }
 
 function saveSettings() {
   currentUser.name =
-    document.getElementById("settingsName").value;
+    document.getElementById(
+      "settingsName"
+    ).value;
 
   currentUser.email =
-    document.getElementById("settingsEmail").value;
+    document.getElementById(
+      "settingsEmail"
+    ).value;
 
   const password =
-    document.getElementById("settingsPassword").value;
+    document.getElementById(
+      "settingsPassword"
+    ).value;
 
   if (password) {
     currentUser.password = password;
   }
 
   currentUser.waterGoal =
-    document.getElementById("settingsWaterGoal").value;
+    document.getElementById(
+      "settingsWaterGoal"
+    ).value;
 
   currentUser.goalWeight =
-    document.getElementById("settingsGoalWeight").value;
+    document.getElementById(
+      "settingsGoalWeight"
+    ).value;
 
   localStorage.setItem(
     "miaufitUser",
@@ -505,31 +651,162 @@ function saveSettings() {
   showHome();
 }
 
-function scheduleReminder() {
-  if (!("Notification" in window)) return;
+function loadExercisesSettings() {
+  const container =
+    document.getElementById(
+      "settingsExerciseList"
+    );
 
-  Notification.requestPermission().then(permission => {
-    if (permission !== "granted") return;
+  container.innerHTML = "";
 
-    const now = new Date();
+  currentUser.exercises.forEach(
+    (exercise, index) => {
+      const div =
+        document.createElement("div");
 
-    const [hours, minutes] =
-      currentUser.reminderTime.split(":");
+      div.className = "exercise-item";
 
-    const reminder = new Date();
+      div.innerHTML = `
+        <h4>Exercício ${index + 1}</h4>
 
-    reminder.setHours(hours);
-    reminder.setMinutes(minutes - 60);
+        <input class="settings-exercise-name" value="${exercise.name}" placeholder="Nome do exercício" />
 
-    const timeout =
-      reminder.getTime() - now.getTime();
+        <input class="settings-exercise-weight" type="number" value="${exercise.weight}" placeholder="Peso utilizado" />
 
-    if (timeout > 0) {
-      setTimeout(() => {
-        new Notification("🐾 MiauFit", {
-          body: "Seu treino começa em 1 hora 💪"
-        });
-      }, timeout);
+        <input class="settings-exercise-sets" type="number" value="${exercise.sets}" placeholder="Quantidade de séries" />
+
+        <input class="settings-exercise-reps" type="number" value="${exercise.reps}" placeholder="Quantidade de repetições" />
+
+        <input class="settings-exercise-rest" type="number" value="${exercise.rest}" placeholder="Descanso em segundos" />
+
+        <button class="secondary" onclick="removeExerciseFromSettings(${index})">
+          Excluir exercício
+        </button>
+      `;
+
+      container.appendChild(div);
     }
-  });
+  );
 }
+
+function addExerciseToSettings() {
+  currentUser.exercises.push({
+    name: "",
+    weight: "",
+    sets: 3,
+    reps: 12,
+    rest: 60
+  });
+
+  loadExercisesSettings();
+}
+
+function removeExerciseFromSettings(index) {
+  const confirmDelete = confirm(
+    "Deseja excluir este exercício?"
+  );
+
+  if (!confirmDelete) return;
+
+  currentUser.exercises.splice(index, 1);
+
+  loadExercisesSettings();
+}
+
+function saveExercisesSettings() {
+  const exercises = [];
+
+  document
+    .querySelectorAll(
+      "#settingsExerciseList .exercise-item"
+    )
+    .forEach(item => {
+      exercises.push({
+        name:
+          item.querySelector(
+            ".settings-exercise-name"
+          ).value,
+
+        weight:
+          item.querySelector(
+            ".settings-exercise-weight"
+          ).value,
+
+        sets: Number(
+          item.querySelector(
+            ".settings-exercise-sets"
+          ).value
+        ),
+
+        reps: Number(
+          item.querySelector(
+            ".settings-exercise-reps"
+          ).value
+        ),
+
+        rest: Number(
+          item.querySelector(
+            ".settings-exercise-rest"
+          ).value
+        )
+      });
+    });
+
+  currentUser.exercises = exercises;
+
+  localStorage.setItem(
+    "miaufitUser",
+    JSON.stringify(currentUser)
+  );
+
+  alert("Exercícios atualizados 💪");
+
+  showHome();
+}
+
+function scheduleReminder() {
+  if (!("Notification" in window)) {
+    return;
+  }
+
+  Notification.requestPermission().then(
+    permission => {
+      if (permission !== "granted") {
+        return;
+      }
+
+      if (!currentUser.reminderTime) {
+        return;
+      }
+
+      const now = new Date();
+
+      const [
+        hours,
+        minutes
+      ] = currentUser.reminderTime.split(":");
+
+      const reminder = new Date();
+
+      reminder.setHours(hours);
+      reminder.setMinutes(minutes - 60);
+
+      const timeout =
+        reminder.getTime() - now.getTime();
+
+      if (timeout > 0) {
+        setTimeout(() => {
+          new Notification("🐾 MiauFit", {
+            body:
+              "Seu treino começa em 1 hora 💪"
+          });
+        }, timeout);
+      }
+    }
+  );
+}
+
+window.addEventListener(
+  "DOMContentLoaded",
+  loadSession
+);
