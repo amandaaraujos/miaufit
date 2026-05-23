@@ -11,6 +11,16 @@ const screens = {
 
 const modal = document.getElementById("welcomeModal");
 
+const weekDays = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado"
+];
+
 let currentUser = null;
 
 let selectedDays = [];
@@ -74,7 +84,7 @@ function showExercisesSettings() {
 
   screens.exercisesSettings.classList.remove("hidden");
 
-  loadWorkoutExercisesByFilter();
+  onWorkoutFilterChange();
 }
 
 document.querySelectorAll("#trainingDays button").forEach(button => {
@@ -93,38 +103,8 @@ document.querySelectorAll("#trainingDays button").forEach(button => {
   });
 });
 
-document
-  .getElementById("trainingType")
-  .addEventListener("change", e => {
-    const muscleBox =
-      document.getElementById("muscleGroupBox");
-
-    if (e.target.value === "Musculação") {
-      muscleBox.classList.remove("hidden");
-    } else {
-      muscleBox.classList.add("hidden");
-    }
-  });
-
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function getWorkoutKey() {
-  const trainingType =
-    document.getElementById("trainingType").value;
-
-  const muscleGroup =
-    document.getElementById("muscleGroup").value;
-
-  if (
-    trainingType === "Musculação" &&
-    muscleGroup
-  ) {
-    return muscleGroup;
-  }
-
-  return trainingType;
 }
 
 function addExercise() {
@@ -185,11 +165,14 @@ function createAccount() {
   const goalWeight =
     document.getElementById("goalWeight").value;
 
-  const muscleGroup =
-    document.getElementById("muscleGroup").value;
-
   if (!name || !email || !password) {
     alert("Preencha os dados principais.");
+
+    return;
+  }
+
+  if (!trainingType) {
+    alert("Selecione um tipo de treino.");
 
     return;
   }
@@ -205,8 +188,6 @@ function createAccount() {
 
     return;
   }
-
-  const workoutKey = getWorkoutKey();
 
   const exercises = [];
 
@@ -236,17 +217,19 @@ function createAccount() {
     name,
     email,
     password,
-    trainingDays: selectedDays,
-    trainingType,
     knowledgeLevel,
-    reminderTime,
+
     waterGoal,
     initialWeight,
     goalWeight,
-    muscleGroup,
 
     workouts: {
-      [workoutKey]: exercises
+      [trainingType]: {
+        name: trainingType,
+        days: selectedDays,
+        time: reminderTime,
+        exercises
+      }
     },
 
     history: []
@@ -290,8 +273,6 @@ function login() {
   currentUser = user;
 
   saveSession();
-
-  scheduleReminder();
 
   showHome();
 }
@@ -337,12 +318,28 @@ function logout() {
   modal.classList.add("active");
 }
 
+function getTodayWorkout() {
+  const today = new Date().getDay();
+
+  const workouts =
+    Object.values(currentUser.workouts);
+
+  return workouts.find(workout =>
+    workout.days.includes(today)
+  );
+}
+
 function loadHome() {
   const greeting =
     document.getElementById("homeGreeting");
 
   const todayWorkoutName =
     document.getElementById("todayWorkoutName");
+
+  const todayWorkoutSchedule =
+    document.getElementById(
+      "todayWorkoutSchedule"
+    );
 
   const restActions =
     document.getElementById("restDayActions");
@@ -356,23 +353,14 @@ function loadHome() {
   greeting.innerText =
     `Oi, ${currentUser.name} 🐾`;
 
-  const today = new Date().getDay();
+  const todayWorkout = getTodayWorkout();
 
-  const isTrainingDay =
-    currentUser.trainingDays.includes(today);
+  if (todayWorkout) {
+    todayWorkoutName.innerText =
+      todayWorkout.name;
 
-  let workoutName = currentUser.trainingType;
-
-  if (
-    currentUser.trainingType === "Musculação" &&
-    currentUser.muscleGroup
-  ) {
-    workoutName =
-      `Treino de ${currentUser.muscleGroup}`;
-  }
-
-  if (isTrainingDay) {
-    todayWorkoutName.innerText = workoutName;
+    todayWorkoutSchedule.innerText =
+      `Horário: ${todayWorkout.time || "Não definido"}`;
 
     startButton.disabled = false;
 
@@ -383,6 +371,9 @@ function loadHome() {
   } else {
     todayWorkoutName.innerText =
       "Hoje é dia de descanso 🧘";
+
+    todayWorkoutSchedule.innerText =
+      "Nenhum treino programado para hoje.";
 
     startButton.disabled = true;
 
@@ -423,25 +414,21 @@ function loadLastWorkout() {
   `;
 }
 
-function getTodayWorkoutName() {
-  if (
-    currentUser.trainingType === "Musculação" &&
-    currentUser.muscleGroup
-  ) {
-    return currentUser.muscleGroup;
+function startWorkout() {
+  const todayWorkout = getTodayWorkout();
+
+  if (!todayWorkout) {
+    return;
   }
 
-  return currentUser.trainingType;
-}
-
-function startWorkout() {
-  currentWorkoutName = getTodayWorkoutName();
+  currentWorkoutName =
+    todayWorkout.name;
 
   currentWorkoutExercises =
-    currentUser.workouts[currentWorkoutName] || [];
+    todayWorkout.exercises || [];
 
   if (!currentWorkoutExercises.length) {
-    alert("Nenhum exercício encontrado nesse treino.");
+    alert("Esse treino não possui exercícios.");
 
     return;
   }
@@ -485,7 +472,8 @@ function openExercise() {
 
   document.getElementById(
     "exerciseVideo"
-  ).href = "https://youtube.com";
+  ).href =
+    "https://youtube.com";
 }
 
 function pauseSet() {
@@ -533,7 +521,8 @@ function startRest(seconds) {
         .getElementById("restScreen")
         .classList.add("finished");
 
-      timer.innerText = "Fim do descanso!";
+      timer.innerText =
+        "Fim do descanso!";
 
       setTimeout(() => {
         document
@@ -672,51 +661,6 @@ function loadSettings() {
   document.getElementById(
     "settingsGoalWeight"
   ).value = currentUser.goalWeight;
-
-  document.getElementById(
-    "settingsTrainingType"
-  ).value = currentUser.trainingType;
-
-  document.getElementById(
-    "settingsMuscleGroup"
-  ).value = currentUser.muscleGroup || "";
-
-  document.getElementById(
-    "settingsReminderTime"
-  ).value = currentUser.reminderTime;
-
-  document
-    .querySelectorAll(
-      "#settingsTrainingDays button"
-    )
-    .forEach(button => {
-      const day = Number(button.dataset.day);
-
-      if (
-        currentUser.trainingDays.includes(day)
-      ) {
-        button.classList.add("active");
-      } else {
-        button.classList.remove("active");
-      }
-
-      button.onclick = () => {
-        if (
-          currentUser.trainingDays.includes(day)
-        ) {
-          currentUser.trainingDays =
-            currentUser.trainingDays.filter(
-              d => d !== day
-            );
-
-          button.classList.remove("active");
-        } else {
-          currentUser.trainingDays.push(day);
-
-          button.classList.add("active");
-        }
-      };
-    });
 }
 
 function saveSettings() {
@@ -745,21 +689,6 @@ function saveSettings() {
       "settingsGoalWeight"
     ).value;
 
-  currentUser.trainingType =
-    document.getElementById(
-      "settingsTrainingType"
-    ).value;
-
-  currentUser.muscleGroup =
-    document.getElementById(
-      "settingsMuscleGroup"
-    ).value;
-
-  currentUser.reminderTime =
-    document.getElementById(
-      "settingsReminderTime"
-    ).value;
-
   const password =
     document.getElementById(
       "settingsPassword"
@@ -779,35 +708,93 @@ function saveSettings() {
   showHome();
 }
 
-function loadWorkoutExercisesByFilter() {
-  const filter =
+function onWorkoutFilterChange() {
+  const workoutName =
     document.getElementById("workoutFilter")
       .value;
 
+  if (!currentUser.workouts[workoutName]) {
+    currentUser.workouts[workoutName] = {
+      name: workoutName,
+      days: [],
+      time: "",
+      exercises: []
+    };
+  }
+
+  const workout =
+    currentUser.workouts[workoutName];
+
+  document.getElementById(
+    "selectedWorkoutTitle"
+  ).innerText =
+    `Treino: ${workout.name}`;
+
+  const details =
+    document.getElementById(
+      "selectedWorkoutDetails"
+    );
+
+  details.innerHTML = `
+    📅 Dias:
+    ${
+      workout.days.length
+        ? workout.days
+            .map(day => weekDays[day])
+            .join(", ")
+        : "Nenhum dia definido"
+    }
+    <br><br>
+
+    ⏰ Horário:
+    ${workout.time || "Não definido"}
+  `;
+
+  document.getElementById(
+    "workoutConfigTime"
+  ).value = workout.time || "";
+
+  document
+    .querySelectorAll(
+      "#workoutConfigDays button"
+    )
+    .forEach(button => {
+      const day = Number(button.dataset.day);
+
+      if (workout.days.includes(day)) {
+        button.classList.add("active");
+      } else {
+        button.classList.remove("active");
+      }
+
+      button.onclick = () => {
+        if (workout.days.includes(day)) {
+          workout.days =
+            workout.days.filter(
+              d => d !== day
+            );
+
+          button.classList.remove("active");
+        } else {
+          workout.days.push(day);
+
+          button.classList.add("active");
+        }
+      };
+    });
+
+  loadWorkoutExercises(workout);
+}
+
+function loadWorkoutExercises(workout) {
   const container =
     document.getElementById(
       "settingsExerciseList"
     );
 
-  const title =
-    document.getElementById(
-      "selectedWorkoutTitle"
-    );
-
-  title.innerText =
-    `Treino: ${filter}`;
-
   container.innerHTML = "";
 
-  if (!currentUser.workouts) {
-    currentUser.workouts = {};
-  }
-
-  if (!currentUser.workouts[filter]) {
-    currentUser.workouts[filter] = [];
-  }
-
-  currentUser.workouts[filter].forEach(
+  workout.exercises.forEach(
     (exercise, index) => {
       const div =
         document.createElement("div");
@@ -827,7 +814,7 @@ function loadWorkoutExercisesByFilter() {
 
         <input class="settings-exercise-rest" type="number" value="${exercise.rest}" placeholder="Descanso em segundos" />
 
-        <button class="secondary" onclick="removeExercise('${filter}', ${index})">
+        <button class="secondary" onclick="removeExercise(${index})">
           Excluir exercício
         </button>
       `;
@@ -837,15 +824,13 @@ function loadWorkoutExercisesByFilter() {
 }
 
 function addExerciseToSelectedWorkout() {
-  const filter =
+  const workoutName =
     document.getElementById("workoutFilter")
       .value;
 
-  if (!currentUser.workouts[filter]) {
-    currentUser.workouts[filter] = [];
-  }
-
-  currentUser.workouts[filter].push({
+  currentUser.workouts[
+    workoutName
+  ].exercises.push({
     name: "",
     weight: "",
     sets: 3,
@@ -853,10 +838,14 @@ function addExerciseToSelectedWorkout() {
     rest: 60
   });
 
-  loadWorkoutExercisesByFilter();
+  onWorkoutFilterChange();
 }
 
-function removeExercise(filter, index) {
+function removeExercise(index) {
+  const workoutName =
+    document.getElementById("workoutFilter")
+      .value;
+
   const confirmDelete = confirm(
     "Deseja excluir este exercício?"
   );
@@ -865,18 +854,25 @@ function removeExercise(filter, index) {
     return;
   }
 
-  currentUser.workouts[filter].splice(
-    index,
-    1
-  );
+  currentUser.workouts[
+    workoutName
+  ].exercises.splice(index, 1);
 
-  loadWorkoutExercisesByFilter();
+  onWorkoutFilterChange();
 }
 
-function saveSelectedWorkoutExercises() {
-  const filter =
+function saveSelectedWorkoutConfig() {
+  const workoutName =
     document.getElementById("workoutFilter")
       .value;
+
+  const workout =
+    currentUser.workouts[workoutName];
+
+  workout.time =
+    document.getElementById(
+      "workoutConfigTime"
+    ).value;
 
   const exercises = [];
 
@@ -916,7 +912,7 @@ function saveSelectedWorkoutExercises() {
       });
     });
 
-  currentUser.workouts[filter] = exercises;
+  workout.exercises = exercises;
 
   localStorage.setItem(
     "miaufitUser",
@@ -927,49 +923,7 @@ function saveSelectedWorkoutExercises() {
     "Treino atualizado com sucesso 💪"
   );
 
-  loadWorkoutExercisesByFilter();
-}
-
-function scheduleReminder() {
-  if (!("Notification" in window)) {
-    return;
-  }
-
-  Notification.requestPermission().then(
-    permission => {
-      if (permission !== "granted") {
-        return;
-      }
-
-      if (!currentUser.reminderTime) {
-        return;
-      }
-
-      const now = new Date();
-
-      const [
-        hours,
-        minutes
-      ] = currentUser.reminderTime.split(":");
-
-      const reminder = new Date();
-
-      reminder.setHours(hours);
-      reminder.setMinutes(minutes - 60);
-
-      const timeout =
-        reminder.getTime() - now.getTime();
-
-      if (timeout > 0) {
-        setTimeout(() => {
-          new Notification("🐾 MiauFit", {
-            body:
-              "Seu treino começa em 1 hora 💪"
-          });
-        }, timeout);
-      }
-    }
-  );
+  onWorkoutFilterChange();
 }
 
 window.addEventListener(
