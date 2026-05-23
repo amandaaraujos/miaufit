@@ -18,6 +18,7 @@ let currentWorkout = null;
 let currentExerciseIndex = 0;
 let currentSet = 1;
 let restInterval = null;
+let openedExerciseKey = null;
 
 function hideAllScreens() {
   Object.values(screens).forEach(screen => {
@@ -339,7 +340,7 @@ function loadWorkoutsList() {
       <label>Nome do treino</label>
       <input 
         value="${workout.name || ""}" 
-        onchange="updateWorkoutName(${workout.id}, this.value)" 
+        oninput="updateWorkoutName(${workout.id}, this.value)" 
       />
 
       <label>Dias desse treino</label>
@@ -360,7 +361,7 @@ function loadWorkoutsList() {
       <input 
         type="time" 
         value="${workout.time || ""}" 
-        onchange="updateWorkoutTime(${workout.id}, this.value)" 
+        oninput="updateWorkoutTime(${workout.id}, this.value)" 
       />
 
       <div class="workout-details">
@@ -378,83 +379,88 @@ function loadWorkoutsList() {
       <h4>Exercícios</h4>
 
       <div>
-        ${workout.exercises.map((exercise, index) => `
-          <div class="exercise-item">
-            <div
-              class="exercise-summary"
-              onclick="toggleExerciseForm(${workout.id}, ${index})"
-            >
-              <strong>${exercise.name || "Exercício sem nome"}</strong>
-              <span>
-                ${exercise.sets || 0} séries ·
-                ${exercise.reps || 0} repetições ·
-                ${exercise.weight || 0}kg ·
-                descanso de ${exercise.rest || 0}s
-              </span>
-            </div>
+        ${workout.exercises.map((exercise, index) => {
+          const exerciseKey = `${workout.id}-${index}`;
+          const isOpen = openedExerciseKey === exerciseKey;
 
+          return `
             <div
-              class="exercise-form collapsed"
-              id="exerciseForm-${workout.id}-${index}"
+              class="exercise-item"
+              data-exercise-box="${exerciseKey}"
             >
-              <label>Nome do exercício</label>
-              <input
-                value="${exercise.name || ""}"
-                oninput="updateExercise(${workout.id}, ${index}, 'name', this.value, false)"
-                onchange="saveUserAndReloadWorkouts(false)"
-              />
-
-              <label>Peso usado</label>
-              <div class="weight-field">
-                <input
-                  type="number"
-                  value="${exercise.weight || 0}"
-                  oninput="updateExerciseWeight(${workout.id}, ${index}, this.value)"
-                />
-                <span class="weight-suffix">kg</span>
+              <div
+                class="exercise-summary"
+                onclick="openExerciseForm('${exerciseKey}')"
+              >
+                <strong>${exercise.name || "Exercício sem nome"}</strong>
+                <span>
+                  ${exercise.sets || 0} séries ·
+                  ${exercise.reps || 0} repetições ·
+                  ${exercise.weight || 0}kg ·
+                  descanso de ${exercise.rest || 0}s
+                </span>
               </div>
 
-              <p
-                class="weight-preview"
-                id="weightPreview-${workout.id}-${index}"
+              <div
+                class="exercise-form ${isOpen ? "" : "collapsed"}"
+                id="exerciseForm-${exerciseKey}"
+                onclick="event.stopPropagation()"
               >
-                Peso atual:
-                <strong>${exercise.weight || 0}kg</strong>
-              </p>
+                <label>Nome do exercício</label>
+                <input
+                  value="${exercise.name || ""}"
+                  oninput="updateExercise(${workout.id}, ${index}, 'name', this.value)"
+                />
 
-              <label>Séries</label>
-              <input
-                type="number"
-                value="${exercise.sets || 0}"
-                oninput="updateExercise(${workout.id}, ${index}, 'sets', this.value, false)"
-                onchange="saveUserAndReloadWorkouts(false)"
-              />
+                <label>Peso usado</label>
+                <div class="weight-field">
+                  <input
+                    type="number"
+                    value="${exercise.weight || 0}"
+                    oninput="updateExerciseWeight(${workout.id}, ${index}, this.value)"
+                  />
+                  <span class="weight-suffix">kg</span>
+                </div>
 
-              <label>Repetições</label>
-              <input
-                type="number"
-                value="${exercise.reps || 0}"
-                oninput="updateExercise(${workout.id}, ${index}, 'reps', this.value, false)"
-                onchange="saveUserAndReloadWorkouts(false)"
-              />
+                <p
+                  class="weight-preview"
+                  id="weightPreview-${exerciseKey}"
+                >
+                  Peso atual:
+                  <strong>${exercise.weight || 0}kg</strong>
+                </p>
 
-              <label>Descanso em segundos</label>
-              <input
-                type="number"
-                value="${exercise.rest || 0}"
-                oninput="updateExercise(${workout.id}, ${index}, 'rest', this.value, false)"
-                onchange="saveUserAndReloadWorkouts(false)"
-              />
+                <label>Séries</label>
+                <input
+                  type="number"
+                  value="${exercise.sets || 0}"
+                  oninput="updateExercise(${workout.id}, ${index}, 'sets', this.value)"
+                />
 
-              <button
-                class="secondary"
-                onclick="removeExercise(${workout.id}, ${index})"
-              >
-                Excluir exercício
-              </button>
+                <label>Repetições</label>
+                <input
+                  type="number"
+                  value="${exercise.reps || 0}"
+                  oninput="updateExercise(${workout.id}, ${index}, 'reps', this.value)"
+                />
+
+                <label>Descanso em segundos</label>
+                <input
+                  type="number"
+                  value="${exercise.rest || 0}"
+                  oninput="updateExercise(${workout.id}, ${index}, 'rest', this.value)"
+                />
+
+                <button
+                  class="secondary"
+                  onclick="removeExercise(${workout.id}, ${index})"
+                >
+                  Excluir exercício
+                </button>
+              </div>
             </div>
-          </div>
-        `).join("")}
+          `;
+        }).join("")}
       </div>
 
       <button
@@ -522,13 +528,66 @@ function toggleWorkoutDay(workoutId, day) {
   loadWorkoutsList();
 }
 
-function toggleExerciseForm(workoutId, exerciseIndex) {
-  const form = document.getElementById(`exerciseForm-${workoutId}-${exerciseIndex}`);
-
-  if (!form) return;
-
-  form.classList.toggle("collapsed");
+function openExerciseForm(exerciseKey) {
+  openedExerciseKey = openedExerciseKey === exerciseKey ? null : exerciseKey;
+  loadWorkoutsList();
 }
+
+function closeOpenedExerciseForm() {
+  openedExerciseKey = null;
+  loadWorkoutsList();
+}
+
+document.addEventListener("click", event => {
+  if (!screens.exercisesSettings || screens.exercisesSettings.classList.contains("hidden")) {
+    return;
+  }
+
+  if (!openedExerciseKey) {
+    return;
+  }
+
+  const openedBox = document.querySelector(`[data-exercise-box="${openedExerciseKey}"]`);
+
+  if (!openedBox) {
+    return;
+  }
+
+  const clickedInsideOpenedBox = openedBox.contains(event.target);
+  const clickedOnExerciseSummary = event.target.closest(".exercise-summary");
+  const clickedOnActionButton = event.target.closest("button");
+
+  if (!clickedInsideOpenedBox || clickedOnExerciseSummary || clickedOnActionButton) {
+    return;
+  }
+});
+
+document.addEventListener("click", event => {
+  if (!screens.exercisesSettings || screens.exercisesSettings.classList.contains("hidden")) {
+    return;
+  }
+
+  if (!openedExerciseKey) {
+    return;
+  }
+
+  const openedBox = document.querySelector(`[data-exercise-box="${openedExerciseKey}"]`);
+
+  if (!openedBox) {
+    openedExerciseKey = null;
+    return;
+  }
+
+  const clickedInsideOpenedBox = openedBox.contains(event.target);
+  const clickedOnAnotherSummary =
+    event.target.closest(".exercise-summary") &&
+    !clickedInsideOpenedBox;
+
+  if (!clickedInsideOpenedBox || clickedOnAnotherSummary) {
+    openedExerciseKey = null;
+    loadWorkoutsList();
+  }
+});
 
 function addExerciseToWorkout(workoutId) {
   const workout = findWorkout(workoutId);
@@ -545,12 +604,14 @@ function addExerciseToWorkout(workoutId) {
     rest: 60
   });
 
+  const lastIndex = workout.exercises.length - 1;
+  openedExerciseKey = `${workoutId}-${lastIndex}`;
+
   saveUser();
   loadWorkoutsList();
 
   setTimeout(() => {
-    const lastIndex = workout.exercises.length - 1;
-    const form = document.getElementById(`exerciseForm-${workoutId}-${lastIndex}`);
+    const form = document.getElementById(`exerciseForm-${openedExerciseKey}`);
 
     if (form) {
       form.classList.remove("collapsed");
@@ -562,7 +623,7 @@ function addExerciseToWorkout(workoutId) {
   }, 100);
 }
 
-function updateExercise(workoutId, exerciseIndex, field, value, shouldReload = false) {
+function updateExercise(workoutId, exerciseIndex, field, value) {
   const workout = findWorkout(workoutId);
 
   if (!workout || !workout.exercises[exerciseIndex]) return;
@@ -573,10 +634,6 @@ function updateExercise(workoutId, exerciseIndex, field, value, shouldReload = f
       : value;
 
   saveUser();
-
-  if (shouldReload) {
-    loadWorkoutsList();
-  }
 }
 
 function updateExerciseWeight(workoutId, exerciseIndex, value) {
@@ -588,7 +645,8 @@ function updateExerciseWeight(workoutId, exerciseIndex, value) {
 
   workout.exercises[exerciseIndex].weight = numericValue;
 
-  const preview = document.getElementById(`weightPreview-${workoutId}-${exerciseIndex}`);
+  const exerciseKey = `${workoutId}-${exerciseIndex}`;
+  const preview = document.getElementById(`weightPreview-${exerciseKey}`);
 
   if (preview) {
     preview.innerHTML = `
@@ -609,6 +667,8 @@ function removeExercise(workoutId, exerciseIndex) {
 
   workout.exercises.splice(exerciseIndex, 1);
 
+  openedExerciseKey = null;
+
   saveUser();
   loadWorkoutsList();
 }
@@ -617,6 +677,8 @@ function removeWorkout(workoutId) {
   if (!confirm("Deseja excluir este treino?")) return;
 
   currentUser.workouts = currentUser.workouts.filter(workout => Number(workout.id) !== Number(workoutId));
+
+  openedExerciseKey = null;
 
   saveUser();
   loadWorkoutsList();
@@ -628,6 +690,8 @@ function saveUserAndReloadWorkouts(showAlert = true) {
   if (showAlert) {
     alert("Treino salvo com sucesso 💪");
   }
+
+  openedExerciseKey = null;
 
   loadWorkoutsList();
 }
