@@ -390,7 +390,7 @@ function loadWorkoutsList() {
             >
               <div
                 class="exercise-summary"
-                onclick="openExerciseForm('${exerciseKey}')"
+                onclick="openExerciseForm(event, '${exerciseKey}')"
               >
                 <strong>${exercise.name || "Exercício sem nome"}</strong>
                 <span>
@@ -528,18 +528,24 @@ function toggleWorkoutDay(workoutId, day) {
   loadWorkoutsList();
 }
 
-function openExerciseForm(exerciseKey) {
-  openedExerciseKey = openedExerciseKey === exerciseKey ? null : exerciseKey;
-  loadWorkoutsList();
-}
+function openExerciseForm(event, exerciseKey) {
+  if (event) {
+    event.stopPropagation();
+  }
 
-function closeOpenedExerciseForm() {
-  openedExerciseKey = null;
+  openedExerciseKey =
+    openedExerciseKey === exerciseKey
+      ? null
+      : exerciseKey;
+
   loadWorkoutsList();
 }
 
 document.addEventListener("click", event => {
-  if (!screens.exercisesSettings || screens.exercisesSettings.classList.contains("hidden")) {
+  if (
+    !screens.exercisesSettings ||
+    screens.exercisesSettings.classList.contains("hidden")
+  ) {
     return;
   }
 
@@ -547,31 +553,9 @@ document.addEventListener("click", event => {
     return;
   }
 
-  const openedBox = document.querySelector(`[data-exercise-box="${openedExerciseKey}"]`);
-
-  if (!openedBox) {
-    return;
-  }
-
-  const clickedInsideOpenedBox = openedBox.contains(event.target);
-  const clickedOnExerciseSummary = event.target.closest(".exercise-summary");
-  const clickedOnActionButton = event.target.closest("button");
-
-  if (!clickedInsideOpenedBox || clickedOnExerciseSummary || clickedOnActionButton) {
-    return;
-  }
-});
-
-document.addEventListener("click", event => {
-  if (!screens.exercisesSettings || screens.exercisesSettings.classList.contains("hidden")) {
-    return;
-  }
-
-  if (!openedExerciseKey) {
-    return;
-  }
-
-  const openedBox = document.querySelector(`[data-exercise-box="${openedExerciseKey}"]`);
+  const openedBox = document.querySelector(
+    `[data-exercise-box="${openedExerciseKey}"]`
+  );
 
   if (!openedBox) {
     openedExerciseKey = null;
@@ -579,11 +563,8 @@ document.addEventListener("click", event => {
   }
 
   const clickedInsideOpenedBox = openedBox.contains(event.target);
-  const clickedOnAnotherSummary =
-    event.target.closest(".exercise-summary") &&
-    !clickedInsideOpenedBox;
 
-  if (!clickedInsideOpenedBox || clickedOnAnotherSummary) {
+  if (!clickedInsideOpenedBox) {
     openedExerciseKey = null;
     loadWorkoutsList();
   }
