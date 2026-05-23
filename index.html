@@ -13,8 +13,8 @@
       <h1>🐾 MiauFit</h1>
       <p>Seu cantinho para registrar treinos, acompanhar evolução e cuidar de você no seu ritmo.</p>
 
-      <button onclick="showLogin()">Já tenho conta</button>
-      <button class="secondary" onclick="showRegister()">Criar uma conta</button>
+      <button type="button" onclick="showLogin()">Já tenho conta</button>
+      <button type="button" class="secondary" onclick="showRegister()">Criar uma conta</button>
     </div>
   </div>
 
@@ -24,21 +24,31 @@
       <h2>Entrar no MiauFit</h2>
       <p>Que bom te ver de novo. Bora cuidar do corpinho? 💪</p>
 
-      <input id="loginEmail" type="email" placeholder="E-mail" />
-      <input id="loginPassword" type="password" placeholder="Senha" />
+      <label for="loginEmail">E-mail</label>
+      <input id="loginEmail" type="email" placeholder="Digite seu e-mail" autocomplete="email" />
 
-      <button onclick="login()">Entrar</button>
-      <button class="text-button" onclick="showRegister()">Criar uma conta</button>
+      <label for="loginPassword">Senha</label>
+      <input id="loginPassword" type="password" placeholder="Digite sua senha" autocomplete="current-password" />
+
+      <button type="button" onclick="login()">Entrar</button>
+      <button type="button" class="text-button" onclick="showRegister()">Criar uma conta</button>
     </section>
 
     <section id="registerScreen" class="screen hidden">
       <h2>Criar conta</h2>
       <p>Vamos montar uma rotina de treino com a sua cara.</p>
 
-      <input id="registerName" type="text" placeholder="Nome" />
-      <input id="registerEmail" type="email" placeholder="E-mail" />
-      <input id="registerPassword" type="password" placeholder="Senha" />
-      <input id="registerConfirmPassword" type="password" placeholder="Confirmar senha" />
+      <label for="registerName">Nome</label>
+      <input id="registerName" type="text" placeholder="Como você quer ser chamado?" autocomplete="name" />
+
+      <label for="registerEmail">E-mail</label>
+      <input id="registerEmail" type="email" placeholder="seunome@email.com" autocomplete="email" />
+
+      <label for="registerPassword">Senha</label>
+      <input id="registerPassword" type="password" placeholder="Crie uma senha" autocomplete="new-password" />
+
+      <label for="registerConfirmPassword">Confirmar senha</label>
+      <input id="registerConfirmPassword" type="password" placeholder="Digite a senha novamente" autocomplete="new-password" />
 
       <h3>Dias de treino</h3>
       <p class="helper-text">Selecione os dias em que você pretende treinar.</p>
@@ -53,8 +63,9 @@
         <button type="button" data-day="6">Sáb</button>
       </div>
 
+      <label for="trainingType">Tipo de treino principal</label>
       <select id="trainingType">
-        <option value="">Tipo de treino</option>
+        <option value="">Selecione o tipo de treino</option>
         <option value="Musculação">Musculação</option>
         <option value="Yoga">Yoga</option>
         <option value="Natação">Natação</option>
@@ -63,15 +74,16 @@
         <option value="Pilates">Pilates</option>
       </select>
 
+      <label for="knowledgeLevel">Nível de conhecimento</label>
       <select id="knowledgeLevel">
-        <option value="">Nível de conhecimento</option>
+        <option value="">Selecione seu nível</option>
         <option value="Iniciante">Iniciante</option>
         <option value="Intermediário">Intermediário</option>
         <option value="Avançado">Avançado</option>
       </select>
 
       <div id="muscleGroupBox" class="hidden">
-        <h3>Tipo de musculação</h3>
+        <label for="muscleGroup">Foco da musculação</label>
         <select id="muscleGroup">
           <option value="">Selecione o foco do treino</option>
           <option value="Superiores">Treino de superiores</option>
@@ -85,12 +97,17 @@
       <label for="reminderTime">Horário do treino</label>
       <input id="reminderTime" type="time" />
 
-      <input id="waterGoal" type="number" placeholder="Meta de água por dia em ml" />
-      <input id="initialWeight" type="number" placeholder="Peso inicial" />
-      <input id="goalWeight" type="number" placeholder="Peso objetivo" />
+      <label for="waterGoal">Meta de água por dia</label>
+      <input id="waterGoal" type="number" placeholder="Exemplo: 2000 ml" />
 
-      <h3>Exercícios</h3>
-      <p class="helper-text">Cadastre sua ficha inicial. Depois você poderá editar tudo na área logada.</p>
+      <label for="initialWeight">Peso inicial</label>
+      <input id="initialWeight" type="number" placeholder="Exemplo: 70 kg" />
+
+      <label for="goalWeight">Peso objetivo</label>
+      <input id="goalWeight" type="number" placeholder="Exemplo: 65 kg" />
+
+      <h3>Exercícios do treino inicial</h3>
+      <p class="helper-text">Cadastre a primeira ficha. Depois você poderá criar e editar outros treinos.</p>
 
       <div id="exerciseList"></div>
 
@@ -138,10 +155,25 @@
       </div>
 
       <nav class="bottom-nav">
-        <button type="button" onclick="showHome()">Início</button>
-        <button type="button" onclick="showHistory()">Histórico</button>
-        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
-        <button type="button" onclick="showSettings()">Conta</button>
+        <button type="button" onclick="showHome()" aria-label="Ir para início">
+          <span class="nav-icon">🏠</span>
+          <span>Início</span>
+        </button>
+
+        <button type="button" onclick="showHistory()" aria-label="Ir para histórico">
+          <span class="nav-icon">📅</span>
+          <span>Histórico</span>
+        </button>
+
+        <button type="button" onclick="showExercisesSettings()" aria-label="Ir para exercícios">
+          <span class="nav-icon">🏋️</span>
+          <span>Exercícios</span>
+        </button>
+
+        <button type="button" onclick="showSettings()" aria-label="Ir para conta">
+          <span class="nav-icon">👤</span>
+          <span>Conta</span>
+        </button>
       </nav>
     </section>
 
@@ -150,6 +182,7 @@
       <p class="helper-text">Faça no seu ritmo. O importante é registrar sua evolução.</p>
 
       <div class="card workout-card">
+        <p><strong>Treino:</strong> <span id="currentWorkoutName">Treino do dia</span></p>
         <p><strong>Série:</strong> <span id="currentSet">1</span></p>
         <p><strong>Repetições:</strong> <span id="currentReps"></span></p>
         <p><strong>Peso:</strong> <span id="currentWeight"></span></p>
@@ -177,36 +210,85 @@
       <button type="button" class="secondary" onclick="showHome()">Voltar</button>
 
       <nav class="bottom-nav">
-        <button type="button" onclick="showHome()">Início</button>
-        <button type="button" onclick="showHistory()">Histórico</button>
-        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
-        <button type="button" onclick="showSettings()">Conta</button>
+        <button type="button" onclick="showHome()" aria-label="Ir para início">
+          <span class="nav-icon">🏠</span>
+          <span>Início</span>
+        </button>
+
+        <button type="button" onclick="showHistory()" aria-label="Ir para histórico">
+          <span class="nav-icon">📅</span>
+          <span>Histórico</span>
+        </button>
+
+        <button type="button" onclick="showExercisesSettings()" aria-label="Ir para exercícios">
+          <span class="nav-icon">🏋️</span>
+          <span>Exercícios</span>
+        </button>
+
+        <button type="button" onclick="showSettings()" aria-label="Ir para conta">
+          <span class="nav-icon">👤</span>
+          <span>Conta</span>
+        </button>
       </nav>
     </section>
 
     <section id="exercisesSettingsScreen" class="screen hidden">
       <h2>Configurar exercícios</h2>
-      <p>Edite sua ficha sempre que seu treino mudar.</p>
+      <p>Veja, crie e edite os exercícios de cada tipo de treino.</p>
 
-      <div id="settingsExerciseList"></div>
+      <div class="card">
+        <label for="workoutFilter">Qual treino você quer configurar?</label>
+        <select id="workoutFilter" onchange="loadWorkoutExercisesByFilter()">
+          <option value="Superiores">Treino de superiores</option>
+          <option value="Inferiores">Treino de inferiores</option>
+          <option value="Corpo todo">Corpo todo</option>
+          <option value="Yoga">Yoga</option>
+          <option value="Funcional">Funcional</option>
+          <option value="Natação">Natação</option>
+          <option value="Corrida">Corrida</option>
+          <option value="Pilates">Pilates</option>
+        </select>
+      </div>
 
-      <button type="button" class="secondary" onclick="addExerciseToSettings()">
-        Adicionar exercício
-      </button>
+      <div class="card">
+        <h3 id="selectedWorkoutTitle">Treino selecionado</h3>
+        <p class="helper-text">
+          As alterações salvas aqui passam a valer automaticamente no próximo treino.
+        </p>
 
-      <button type="button" onclick="saveExercisesSettings()">
-        Salvar exercícios
-      </button>
+        <div id="settingsExerciseList"></div>
 
-      <button type="button" class="secondary" onclick="showHome()">
-        Voltar
-      </button>
+        <button type="button" class="secondary" onclick="addExerciseToSelectedWorkout()">
+          Adicionar exercício
+        </button>
+
+        <button type="button" onclick="saveSelectedWorkoutExercises()">
+          Salvar alterações do treino
+        </button>
+      </div>
+
+      <button type="button" class="secondary" onclick="showHome()">Voltar</button>
 
       <nav class="bottom-nav">
-        <button type="button" onclick="showHome()">Início</button>
-        <button type="button" onclick="showHistory()">Histórico</button>
-        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
-        <button type="button" onclick="showSettings()">Conta</button>
+        <button type="button" onclick="showHome()" aria-label="Ir para início">
+          <span class="nav-icon">🏠</span>
+          <span>Início</span>
+        </button>
+
+        <button type="button" onclick="showHistory()" aria-label="Ir para histórico">
+          <span class="nav-icon">📅</span>
+          <span>Histórico</span>
+        </button>
+
+        <button type="button" onclick="showExercisesSettings()" aria-label="Ir para exercícios">
+          <span class="nav-icon">🏋️</span>
+          <span>Exercícios</span>
+        </button>
+
+        <button type="button" onclick="showSettings()" aria-label="Ir para conta">
+          <span class="nav-icon">👤</span>
+          <span>Conta</span>
+        </button>
       </nav>
     </section>
 
@@ -214,22 +296,85 @@
       <h2>Configurações da conta</h2>
       <p>Atualize seus dados sempre que precisar.</p>
 
-      <input id="settingsName" type="text" placeholder="Nome" />
-      <input id="settingsEmail" type="email" placeholder="E-mail" />
-      <input id="settingsPassword" type="password" placeholder="Nova senha" />
+      <label for="settingsName">Nome</label>
+      <input id="settingsName" type="text" placeholder="Seu nome" autocomplete="name" />
+
+      <label for="settingsEmail">E-mail</label>
+      <input id="settingsEmail" type="email" placeholder="Seu e-mail" autocomplete="email" />
+
+      <label for="settingsPassword">Nova senha</label>
+      <input id="settingsPassword" type="password" placeholder="Preencha apenas se quiser alterar" autocomplete="new-password" />
 
       <h3>Metas</h3>
-      <input id="settingsWaterGoal" type="number" placeholder="Meta de água em ml" />
-      <input id="settingsGoalWeight" type="number" placeholder="Peso objetivo" />
+
+      <label for="settingsWaterGoal">Meta de água por dia</label>
+      <input id="settingsWaterGoal" type="number" placeholder="Exemplo: 2000 ml" />
+
+      <label for="settingsInitialWeight">Peso inicial</label>
+      <input id="settingsInitialWeight" type="number" placeholder="Exemplo: 70 kg" />
+
+      <label for="settingsGoalWeight">Peso objetivo</label>
+      <input id="settingsGoalWeight" type="number" placeholder="Exemplo: 65 kg" />
+
+      <h3>Rotina de treino</h3>
+
+      <label for="settingsTrainingType">Tipo de treino principal</label>
+      <select id="settingsTrainingType">
+        <option value="Musculação">Musculação</option>
+        <option value="Yoga">Yoga</option>
+        <option value="Natação">Natação</option>
+        <option value="Corrida">Corrida</option>
+        <option value="Funcional">Funcional</option>
+        <option value="Pilates">Pilates</option>
+      </select>
+
+      <label for="settingsMuscleGroup">Foco da musculação</label>
+      <select id="settingsMuscleGroup">
+        <option value="">Não se aplica</option>
+        <option value="Superiores">Treino de superiores</option>
+        <option value="Inferiores">Treino de inferiores</option>
+        <option value="Corpo todo">Corpo todo</option>
+      </select>
+
+      <label for="settingsReminderTime">Horário do treino</label>
+      <input id="settingsReminderTime" type="time" />
+
+      <h3>Dias de treino</h3>
+      <p class="helper-text">Atualize os dias em que você quer treinar.</p>
+
+      <div class="chips" id="settingsTrainingDays">
+        <button type="button" data-day="0">Dom</button>
+        <button type="button" data-day="1">Seg</button>
+        <button type="button" data-day="2">Ter</button>
+        <button type="button" data-day="3">Qua</button>
+        <button type="button" data-day="4">Qui</button>
+        <button type="button" data-day="5">Sex</button>
+        <button type="button" data-day="6">Sáb</button>
+      </div>
 
       <button type="button" onclick="saveSettings()">Salvar alterações</button>
       <button type="button" class="secondary" onclick="showHome()">Voltar</button>
 
       <nav class="bottom-nav">
-        <button type="button" onclick="showHome()">Início</button>
-        <button type="button" onclick="showHistory()">Histórico</button>
-        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
-        <button type="button" onclick="showSettings()">Conta</button>
+        <button type="button" onclick="showHome()" aria-label="Ir para início">
+          <span class="nav-icon">🏠</span>
+          <span>Início</span>
+        </button>
+
+        <button type="button" onclick="showHistory()" aria-label="Ir para histórico">
+          <span class="nav-icon">📅</span>
+          <span>Histórico</span>
+        </button>
+
+        <button type="button" onclick="showExercisesSettings()" aria-label="Ir para exercícios">
+          <span class="nav-icon">🏋️</span>
+          <span>Exercícios</span>
+        </button>
+
+        <button type="button" onclick="showSettings()" aria-label="Ir para conta">
+          <span class="nav-icon">👤</span>
+          <span>Conta</span>
+        </button>
       </nav>
     </section>
 
