@@ -11,10 +11,13 @@ const screens = {
 
 const modal = document.getElementById("welcomeModal");
 
-let selectedDays = [];
 let currentUser = null;
 
-let currentWorkout = [];
+let selectedDays = [];
+
+let currentWorkoutExercises = [];
+let currentWorkoutName = "";
+
 let currentExerciseIndex = 0;
 let currentSet = 1;
 
@@ -71,7 +74,7 @@ function showExercisesSettings() {
 
   screens.exercisesSettings.classList.remove("hidden");
 
-  loadExercisesSettings();
+  loadWorkoutExercisesByFilter();
 }
 
 document.querySelectorAll("#trainingDays button").forEach(button => {
@@ -93,7 +96,8 @@ document.querySelectorAll("#trainingDays button").forEach(button => {
 document
   .getElementById("trainingType")
   .addEventListener("change", e => {
-    const muscleBox = document.getElementById("muscleGroupBox");
+    const muscleBox =
+      document.getElementById("muscleGroupBox");
 
     if (e.target.value === "Musculação") {
       muscleBox.classList.remove("hidden");
@@ -106,8 +110,26 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function getWorkoutKey() {
+  const trainingType =
+    document.getElementById("trainingType").value;
+
+  const muscleGroup =
+    document.getElementById("muscleGroup").value;
+
+  if (
+    trainingType === "Musculação" &&
+    muscleGroup
+  ) {
+    return muscleGroup;
+  }
+
+  return trainingType;
+}
+
 function addExercise() {
-  const container = document.getElementById("exerciseList");
+  const container =
+    document.getElementById("exerciseList");
 
   const div = document.createElement("div");
 
@@ -141,7 +163,9 @@ function createAccount() {
     document.getElementById("registerPassword").value;
 
   const confirmPassword =
-    document.getElementById("registerConfirmPassword").value;
+    document.getElementById(
+      "registerConfirmPassword"
+    ).value;
 
   const trainingType =
     document.getElementById("trainingType").value;
@@ -165,7 +189,7 @@ function createAccount() {
     document.getElementById("muscleGroup").value;
 
   if (!name || !email || !password) {
-    alert("Preencha os dados principais da conta.");
+    alert("Preencha os dados principais.");
 
     return;
   }
@@ -182,15 +206,29 @@ function createAccount() {
     return;
   }
 
+  const workoutKey = getWorkoutKey();
+
   const exercises = [];
 
   document.querySelectorAll(".exercise-item").forEach(item => {
     exercises.push({
-      name: item.querySelector(".exercise-name").value,
-      weight: item.querySelector(".exercise-weight").value,
-      sets: Number(item.querySelector(".exercise-sets").value),
-      reps: Number(item.querySelector(".exercise-reps").value),
-      rest: Number(item.querySelector(".exercise-rest").value)
+      name:
+        item.querySelector(".exercise-name").value,
+
+      weight:
+        item.querySelector(".exercise-weight").value,
+
+      sets: Number(
+        item.querySelector(".exercise-sets").value
+      ),
+
+      reps: Number(
+        item.querySelector(".exercise-reps").value
+      ),
+
+      rest: Number(
+        item.querySelector(".exercise-rest").value
+      )
     });
   });
 
@@ -206,7 +244,11 @@ function createAccount() {
     initialWeight,
     goalWeight,
     muscleGroup,
-    exercises,
+
+    workouts: {
+      [workoutKey]: exercises
+    },
+
     history: []
   };
 
@@ -254,34 +296,28 @@ function login() {
   showHome();
 }
 
-function logout() {
-  currentUser = null;
-
-  localStorage.removeItem("miaufitLoggedEmail");
-
-  hideAllScreens();
-
-  modal.classList.add("active");
-}
-
 function saveSession() {
   localStorage.setItem(
-    "miaufitLoggedEmail",
-    currentUser.email
+    "miaufitSession",
+    JSON.stringify({
+      email: currentUser.email,
+      logged: true
+    })
   );
 }
 
 function loadSession() {
-  const loggedEmail =
-    localStorage.getItem("miaufitLoggedEmail");
+  const session =
+    JSON.parse(localStorage.getItem("miaufitSession"));
 
   const user =
     JSON.parse(localStorage.getItem("miaufitUser"));
 
   if (
-    loggedEmail &&
+    session &&
+    session.logged &&
     user &&
-    user.email === loggedEmail
+    session.email === user.email
   ) {
     currentUser = user;
 
@@ -289,6 +325,16 @@ function loadSession() {
 
     showHome();
   }
+}
+
+function logout() {
+  currentUser = null;
+
+  localStorage.removeItem("miaufitSession");
+
+  hideAllScreens();
+
+  modal.classList.add("active");
 }
 
 function loadHome() {
@@ -307,31 +353,31 @@ function loadHome() {
   const homeGoalsInfo =
     document.getElementById("homeGoalsInfo");
 
-  greeting.innerText = `Oi, ${currentUser.name} 🐾`;
+  greeting.innerText =
+    `Oi, ${currentUser.name} 🐾`;
 
   const today = new Date().getDay();
 
   const isTrainingDay =
     currentUser.trainingDays.includes(today);
 
+  let workoutName = currentUser.trainingType;
+
+  if (
+    currentUser.trainingType === "Musculação" &&
+    currentUser.muscleGroup
+  ) {
+    workoutName =
+      `Treino de ${currentUser.muscleGroup}`;
+  }
+
   if (isTrainingDay) {
-    let workoutText = currentUser.trainingType;
-
-    if (
-      currentUser.trainingType === "Musculação" &&
-      currentUser.muscleGroup
-    ) {
-      workoutText += ` - ${currentUser.muscleGroup}`;
-    }
-
-    todayWorkoutName.innerText = workoutText;
+    todayWorkoutName.innerText = workoutName;
 
     startButton.disabled = false;
 
     startButton.innerText =
       "Iniciar treino do dia";
-
-    startButton.style.opacity = "1";
 
     restActions.classList.add("hidden");
   } else {
@@ -343,13 +389,11 @@ function loadHome() {
     startButton.innerText =
       "Sem treino programado hoje";
 
-    startButton.style.opacity = "0.5";
-
     restActions.classList.remove("hidden");
   }
 
   homeGoalsInfo.innerHTML = `
-    💧 Meta diária de água: ${currentUser.waterGoal || 0}ml <br>
+    💧 Meta de água: ${currentUser.waterGoal || 0}ml <br>
     ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg <br>
     🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
   `;
@@ -379,11 +423,25 @@ function loadLastWorkout() {
   `;
 }
 
-function startWorkout() {
-  currentWorkout = currentUser.exercises;
+function getTodayWorkoutName() {
+  if (
+    currentUser.trainingType === "Musculação" &&
+    currentUser.muscleGroup
+  ) {
+    return currentUser.muscleGroup;
+  }
 
-  if (!currentWorkout.length) {
-    alert("Nenhum exercício cadastrado.");
+  return currentUser.trainingType;
+}
+
+function startWorkout() {
+  currentWorkoutName = getTodayWorkoutName();
+
+  currentWorkoutExercises =
+    currentUser.workouts[currentWorkoutName] || [];
+
+  if (!currentWorkoutExercises.length) {
+    alert("Nenhum exercício encontrado nesse treino.");
 
     return;
   }
@@ -401,7 +459,11 @@ function openExercise() {
   screens.workout.classList.remove("hidden");
 
   const exercise =
-    currentWorkout[currentExerciseIndex];
+    currentWorkoutExercises[currentExerciseIndex];
+
+  document.getElementById(
+    "currentWorkoutName"
+  ).innerText = currentWorkoutName;
 
   document.getElementById(
     "currentExerciseName"
@@ -409,7 +471,8 @@ function openExercise() {
 
   document.getElementById(
     "currentSet"
-  ).innerText = `${currentSet}/${exercise.sets}`;
+  ).innerText =
+    `${currentSet}/${exercise.sets}`;
 
   document.getElementById(
     "currentReps"
@@ -417,7 +480,8 @@ function openExercise() {
 
   document.getElementById(
     "currentWeight"
-  ).innerText = `${exercise.weight}kg`;
+  ).innerText =
+    `${exercise.weight}kg`;
 
   document.getElementById(
     "exerciseVideo"
@@ -438,7 +502,7 @@ function pauseSet() {
 
 function finishSet() {
   const exercise =
-    currentWorkout[currentExerciseIndex];
+    currentWorkoutExercises[currentExerciseIndex];
 
   startRest(exercise.rest);
 }
@@ -484,7 +548,7 @@ function startRest(seconds) {
 
 function goNext() {
   const exercise =
-    currentWorkout[currentExerciseIndex];
+    currentWorkoutExercises[currentExerciseIndex];
 
   if (currentSet < exercise.sets) {
     currentSet++;
@@ -507,7 +571,8 @@ function goNext() {
   currentSet = 1;
 
   if (
-    currentExerciseIndex >= currentWorkout.length
+    currentExerciseIndex >=
+    currentWorkoutExercises.length
   ) {
     finishWorkout();
 
@@ -519,13 +584,7 @@ function goNext() {
 
 function finishWorkout() {
   const workout = {
-    type:
-      currentUser.trainingType +
-      (
-        currentUser.muscleGroup
-          ? ` - ${currentUser.muscleGroup}`
-          : ""
-      ),
+    type: currentWorkoutName,
 
     date:
       new Date().toLocaleDateString("pt-BR")
@@ -607,8 +666,57 @@ function loadSettings() {
   ).value = currentUser.waterGoal;
 
   document.getElementById(
+    "settingsInitialWeight"
+  ).value = currentUser.initialWeight;
+
+  document.getElementById(
     "settingsGoalWeight"
   ).value = currentUser.goalWeight;
+
+  document.getElementById(
+    "settingsTrainingType"
+  ).value = currentUser.trainingType;
+
+  document.getElementById(
+    "settingsMuscleGroup"
+  ).value = currentUser.muscleGroup || "";
+
+  document.getElementById(
+    "settingsReminderTime"
+  ).value = currentUser.reminderTime;
+
+  document
+    .querySelectorAll(
+      "#settingsTrainingDays button"
+    )
+    .forEach(button => {
+      const day = Number(button.dataset.day);
+
+      if (
+        currentUser.trainingDays.includes(day)
+      ) {
+        button.classList.add("active");
+      } else {
+        button.classList.remove("active");
+      }
+
+      button.onclick = () => {
+        if (
+          currentUser.trainingDays.includes(day)
+        ) {
+          currentUser.trainingDays =
+            currentUser.trainingDays.filter(
+              d => d !== day
+            );
+
+          button.classList.remove("active");
+        } else {
+          currentUser.trainingDays.push(day);
+
+          button.classList.add("active");
+        }
+      };
+    });
 }
 
 function saveSettings() {
@@ -622,6 +730,36 @@ function saveSettings() {
       "settingsEmail"
     ).value;
 
+  currentUser.waterGoal =
+    document.getElementById(
+      "settingsWaterGoal"
+    ).value;
+
+  currentUser.initialWeight =
+    document.getElementById(
+      "settingsInitialWeight"
+    ).value;
+
+  currentUser.goalWeight =
+    document.getElementById(
+      "settingsGoalWeight"
+    ).value;
+
+  currentUser.trainingType =
+    document.getElementById(
+      "settingsTrainingType"
+    ).value;
+
+  currentUser.muscleGroup =
+    document.getElementById(
+      "settingsMuscleGroup"
+    ).value;
+
+  currentUser.reminderTime =
+    document.getElementById(
+      "settingsReminderTime"
+    ).value;
+
   const password =
     document.getElementById(
       "settingsPassword"
@@ -630,16 +768,6 @@ function saveSettings() {
   if (password) {
     currentUser.password = password;
   }
-
-  currentUser.waterGoal =
-    document.getElementById(
-      "settingsWaterGoal"
-    ).value;
-
-  currentUser.goalWeight =
-    document.getElementById(
-      "settingsGoalWeight"
-    ).value;
 
   localStorage.setItem(
     "miaufitUser",
@@ -651,15 +779,35 @@ function saveSettings() {
   showHome();
 }
 
-function loadExercisesSettings() {
+function loadWorkoutExercisesByFilter() {
+  const filter =
+    document.getElementById("workoutFilter")
+      .value;
+
   const container =
     document.getElementById(
       "settingsExerciseList"
     );
 
+  const title =
+    document.getElementById(
+      "selectedWorkoutTitle"
+    );
+
+  title.innerText =
+    `Treino: ${filter}`;
+
   container.innerHTML = "";
 
-  currentUser.exercises.forEach(
+  if (!currentUser.workouts) {
+    currentUser.workouts = {};
+  }
+
+  if (!currentUser.workouts[filter]) {
+    currentUser.workouts[filter] = [];
+  }
+
+  currentUser.workouts[filter].forEach(
     (exercise, index) => {
       const div =
         document.createElement("div");
@@ -667,7 +815,7 @@ function loadExercisesSettings() {
       div.className = "exercise-item";
 
       div.innerHTML = `
-        <h4>Exercício ${index + 1}</h4>
+        <h4>${exercise.name || "Exercício"}</h4>
 
         <input class="settings-exercise-name" value="${exercise.name}" placeholder="Nome do exercício" />
 
@@ -679,18 +827,25 @@ function loadExercisesSettings() {
 
         <input class="settings-exercise-rest" type="number" value="${exercise.rest}" placeholder="Descanso em segundos" />
 
-        <button class="secondary" onclick="removeExerciseFromSettings(${index})">
+        <button class="secondary" onclick="removeExercise('${filter}', ${index})">
           Excluir exercício
         </button>
       `;
 
       container.appendChild(div);
-    }
-  );
+    });
 }
 
-function addExerciseToSettings() {
-  currentUser.exercises.push({
+function addExerciseToSelectedWorkout() {
+  const filter =
+    document.getElementById("workoutFilter")
+      .value;
+
+  if (!currentUser.workouts[filter]) {
+    currentUser.workouts[filter] = [];
+  }
+
+  currentUser.workouts[filter].push({
     name: "",
     weight: "",
     sets: 3,
@@ -698,22 +853,31 @@ function addExerciseToSettings() {
     rest: 60
   });
 
-  loadExercisesSettings();
+  loadWorkoutExercisesByFilter();
 }
 
-function removeExerciseFromSettings(index) {
+function removeExercise(filter, index) {
   const confirmDelete = confirm(
     "Deseja excluir este exercício?"
   );
 
-  if (!confirmDelete) return;
+  if (!confirmDelete) {
+    return;
+  }
 
-  currentUser.exercises.splice(index, 1);
+  currentUser.workouts[filter].splice(
+    index,
+    1
+  );
 
-  loadExercisesSettings();
+  loadWorkoutExercisesByFilter();
 }
 
-function saveExercisesSettings() {
+function saveSelectedWorkoutExercises() {
+  const filter =
+    document.getElementById("workoutFilter")
+      .value;
+
   const exercises = [];
 
   document
@@ -752,16 +916,18 @@ function saveExercisesSettings() {
       });
     });
 
-  currentUser.exercises = exercises;
+  currentUser.workouts[filter] = exercises;
 
   localStorage.setItem(
     "miaufitUser",
     JSON.stringify(currentUser)
   );
 
-  alert("Exercícios atualizados 💪");
+  alert(
+    "Treino atualizado com sucesso 💪"
+  );
 
-  showHome();
+  loadWorkoutExercisesByFilter();
 }
 
 function scheduleReminder() {
@@ -808,5 +974,11 @@ function scheduleReminder() {
 
 window.addEventListener(
   "DOMContentLoaded",
-  loadSession
+  () => {
+    loadSession();
+
+    if (!localStorage.getItem("miaufitSession")) {
+      modal.classList.add("active");
+    }
+  }
 );
