@@ -151,22 +151,22 @@
       </div>
 
       <nav class="bottom-nav">
-        <button type="button" onclick="showHome()" aria-label="Ir para início">
+        <button type="button" onclick="showHome()">
           <span class="nav-icon">🏠</span>
           <span>Início</span>
         </button>
 
-        <button type="button" onclick="showHistory()" aria-label="Ir para histórico">
+        <button type="button" onclick="showHistory()">
           <span class="nav-icon">📅</span>
           <span>Histórico</span>
         </button>
 
-        <button type="button" onclick="showExercisesSettings()" aria-label="Ir para exercícios">
+        <button type="button" onclick="showExercisesSettings()">
           <span class="nav-icon">🏋️</span>
           <span>Exercícios</span>
         </button>
 
-        <button type="button" onclick="showSettings()" aria-label="Ir para conta">
+        <button type="button" onclick="showSettings()">
           <span class="nav-icon">👤</span>
           <span>Conta</span>
         </button>
@@ -180,8 +180,8 @@
       <div class="card workout-card">
         <p><strong>Treino:</strong> <span id="currentWorkoutName">Treino do dia</span></p>
         <p><strong>Série:</strong> <span id="currentSet">1</span></p>
-        <p><strong>Repetições:</strong> <span id="currentReps"></span></p>
-        <p><strong>Peso:</strong> <span id="currentWeight"></span></p>
+        <p><strong>Repetições:</strong> <span id="currentReps">0</span></p>
+        <p><strong>Peso:</strong> <span id="currentWeight">0kg</span></p>
 
         <a id="exerciseVideo" href="https://www.youtube.com" target="_blank">
           Ver execução no YouTube
@@ -231,7 +231,7 @@
         </select>
 
         <h3>Dias desse treino</h3>
-        <p class="helper-text">Ao trocar o tipo de treino, os dias e horário exibidos mudam para aquele treino.</p>
+        <p class="helper-text">Cada tipo de treino tem seus próprios dias e horário.</p>
 
         <div class="chips" id="workoutConfigDays">
           <button type="button" data-day="0">Dom</button>
