@@ -26,38 +26,38 @@ function hideAllScreens() {
 }
 
 function showLogin() {
-  modal.classList.remove("active");
+  if (modal) modal.classList.remove("active");
   hideAllScreens();
-  screens.login.classList.remove("hidden");
+  if (screens.login) screens.login.classList.remove("hidden");
 }
 
 function showRegister() {
-  modal.classList.remove("active");
+  if (modal) modal.classList.remove("active");
   hideAllScreens();
-  screens.register.classList.remove("hidden");
+  if (screens.register) screens.register.classList.remove("hidden");
 }
 
 function showHome() {
   hideAllScreens();
-  screens.home.classList.remove("hidden");
+  if (screens.home) screens.home.classList.remove("hidden");
   loadHome();
 }
 
 function showHistory() {
   hideAllScreens();
-  screens.history.classList.remove("hidden");
+  if (screens.history) screens.history.classList.remove("hidden");
   loadHistory();
 }
 
 function showSettings() {
   hideAllScreens();
-  screens.settings.classList.remove("hidden");
+  if (screens.settings) screens.settings.classList.remove("hidden");
   loadSettings();
 }
 
 function showExercisesSettings() {
   hideAllScreens();
-  screens.exercisesSettings.classList.remove("hidden");
+  if (screens.exercisesSettings) screens.exercisesSettings.classList.remove("hidden");
   loadWorkoutsList();
 }
 
@@ -65,25 +65,106 @@ function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function getTodayWorkout() {
-  if (!currentUser?.workouts) return null;
+function normalizeUserData(user) {
+  if (!user) return null;
 
-  const today = new Date().getDay();
+  if (!user.history) {
+    user.history = [];
+  }
 
-  return currentUser.workouts.find(workout =>
-    workout.days.includes(today)
-  ) || null;
+  if (!user.workouts) {
+    user.workouts = [];
+  }
+
+  if (!Array.isArray(user.workouts)) {
+    user.workouts = Object.keys(user.workouts).map(key => {
+      const oldWorkout = user.workouts[key];
+
+      if (Array.isArray(oldWorkout)) {
+        return {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          name: key,
+          days: user.trainingDays || [],
+          time: user.reminderTime || "",
+          exercises: oldWorkout
+        };
+      }
+
+      return {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        name: oldWorkout.name || key,
+        days: oldWorkout.days || user.trainingDays || [],
+        time: oldWorkout.time || user.reminderTime || "",
+        exercises: oldWorkout.exercises || []
+      };
+    });
+  }
+
+  user.workouts = user.workouts.map(workout => ({
+    id: workout.id || Date.now() + Math.floor(Math.random() * 1000),
+    name: workout.name || "Treino",
+    days: Array.isArray(workout.days) ? workout.days : [],
+    time: workout.time || "",
+    exercises: Array.isArray(workout.exercises) ? workout.exercises : []
+  }));
+
+  return user;
+}
+
+function saveUser() {
+  currentUser = normalizeUserData(currentUser);
+  localStorage.setItem("miaufitUser", JSON.stringify(currentUser));
+}
+
+function saveSession() {
+  if (!currentUser) return;
+
+  localStorage.setItem("miaufitSession", JSON.stringify({
+    email: currentUser.email,
+    logged: true
+  }));
+}
+
+function loadSession() {
+  const session = JSON.parse(localStorage.getItem("miaufitSession"));
+  let user = JSON.parse(localStorage.getItem("miaufitUser"));
+
+  user = normalizeUserData(user);
+
+  if (user) {
+    localStorage.setItem("miaufitUser", JSON.stringify(user));
+  }
+
+  if (session?.logged && user && session.email === user.email) {
+    currentUser = user;
+
+    if (modal) modal.classList.remove("active");
+
+    showHome();
+    return;
+  }
+
+  if (modal) modal.classList.add("active");
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem("miaufitSession");
+
+  hideAllScreens();
+
+  if (modal) modal.classList.add("active");
 }
 
 function createAccount() {
-  const name = document.getElementById("registerName").value.trim();
-  const email = document.getElementById("registerEmail").value.trim();
-  const password = document.getElementById("registerPassword").value;
-  const confirmPassword = document.getElementById("registerConfirmPassword").value;
-  const knowledgeLevel = document.getElementById("knowledgeLevel").value;
-  const waterGoal = document.getElementById("waterGoal").value;
-  const initialWeight = document.getElementById("initialWeight").value;
-  const goalWeight = document.getElementById("goalWeight").value;
+  const name = document.getElementById("registerName")?.value.trim();
+  const email = document.getElementById("registerEmail")?.value.trim();
+  const password = document.getElementById("registerPassword")?.value;
+  const confirmPassword = document.getElementById("registerConfirmPassword")?.value;
+  const knowledgeLevel = document.getElementById("knowledgeLevel")?.value;
+  const waterGoal = document.getElementById("waterGoal")?.value;
+  const initialWeight = document.getElementById("initialWeight")?.value;
+  const goalWeight = document.getElementById("goalWeight")?.value;
 
   if (!name || !email || !password) {
     alert("Preencha os dados principais.");
@@ -112,7 +193,7 @@ function createAccount() {
     history: []
   };
 
-  localStorage.setItem("miaufitUser", JSON.stringify(currentUser));
+  saveUser();
   saveSession();
 
   alert("Conta criada com sucesso 💪");
@@ -120,10 +201,11 @@ function createAccount() {
 }
 
 function login() {
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value;
+  const email = document.getElementById("loginEmail")?.value.trim();
+  const password = document.getElementById("loginPassword")?.value;
 
-  const user = JSON.parse(localStorage.getItem("miaufitUser"));
+  let user = JSON.parse(localStorage.getItem("miaufitUser"));
+  user = normalizeUserData(user);
 
   if (!user) {
     alert("Nenhuma conta encontrada.");
@@ -136,65 +218,84 @@ function login() {
   }
 
   currentUser = user;
+
+  saveUser();
   saveSession();
+
   showHome();
 }
 
-function saveSession() {
-  localStorage.setItem("miaufitSession", JSON.stringify({
-    email: currentUser.email,
-    logged: true
-  }));
-}
-
-function loadSession() {
-  const session = JSON.parse(localStorage.getItem("miaufitSession"));
-  const user = JSON.parse(localStorage.getItem("miaufitUser"));
-
-  if (session?.logged && user && session.email === user.email) {
-    currentUser = user;
-    modal.classList.remove("active");
-    showHome();
+function getTodayWorkout() {
+  if (!currentUser || !Array.isArray(currentUser.workouts)) {
+    return null;
   }
-}
 
-function logout() {
-  currentUser = null;
-  localStorage.removeItem("miaufitSession");
-  hideAllScreens();
-  modal.classList.add("active");
+  const today = new Date().getDay();
+
+  return currentUser.workouts.find(workout =>
+    Array.isArray(workout.days) && workout.days.includes(today)
+  ) || null;
 }
 
 function loadHome() {
-  document.getElementById("homeGreeting").innerText = `Oi, ${currentUser.name} 🐾`;
+  if (!currentUser) return;
 
-  const todayWorkout = getTodayWorkout();
+  const greeting = document.getElementById("homeGreeting");
+  const todayWorkoutName = document.getElementById("todayWorkoutName");
+  const todayWorkoutSchedule = document.getElementById("todayWorkoutSchedule");
   const startButton = document.getElementById("startWorkoutButton");
   const restActions = document.getElementById("restDayActions");
+  const homeGoalsInfo = document.getElementById("homeGoalsInfo");
 
-  if (todayWorkout) {
-    document.getElementById("todayWorkoutName").innerText = todayWorkout.name;
-    document.getElementById("todayWorkoutSchedule").innerText =
-      `Horário: ${todayWorkout.time || "Não definido"}`;
-
-    startButton.disabled = false;
-    startButton.innerText = "Iniciar treino do dia";
-    restActions.classList.add("hidden");
-  } else {
-    document.getElementById("todayWorkoutName").innerText = "Hoje é dia de descanso 🧘";
-    document.getElementById("todayWorkoutSchedule").innerText =
-      "Nenhum treino cadastrado para hoje.";
-
-    startButton.disabled = true;
-    startButton.innerText = "Sem treino programado hoje";
-    restActions.classList.remove("hidden");
+  if (greeting) {
+    greeting.innerText = `Oi, ${currentUser.name || "miau"} 🐾`;
   }
 
-  document.getElementById("homeGoalsInfo").innerHTML = `
-    💧 Meta de água: ${currentUser.waterGoal || 0}ml<br><br>
-    ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg<br><br>
-    🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
-  `;
+  const todayWorkout = getTodayWorkout();
+
+  if (todayWorkout) {
+    if (todayWorkoutName) {
+      todayWorkoutName.innerText = todayWorkout.name || "Treino";
+    }
+
+    if (todayWorkoutSchedule) {
+      todayWorkoutSchedule.innerText = `Horário: ${todayWorkout.time || "Não definido"}`;
+    }
+
+    if (startButton) {
+      startButton.disabled = false;
+      startButton.innerText = "Iniciar treino do dia";
+    }
+
+    if (restActions) {
+      restActions.classList.add("hidden");
+    }
+  } else {
+    if (todayWorkoutName) {
+      todayWorkoutName.innerText = "Hoje é dia de descanso 🧘";
+    }
+
+    if (todayWorkoutSchedule) {
+      todayWorkoutSchedule.innerText = "Nenhum treino cadastrado para hoje.";
+    }
+
+    if (startButton) {
+      startButton.disabled = true;
+      startButton.innerText = "Sem treino programado hoje";
+    }
+
+    if (restActions) {
+      restActions.classList.remove("hidden");
+    }
+  }
+
+  if (homeGoalsInfo) {
+    homeGoalsInfo.innerHTML = `
+      💧 Meta de água: ${currentUser.waterGoal || 0}ml<br><br>
+      ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg<br><br>
+      🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
+    `;
+  }
 
   loadLastWorkout();
 }
@@ -202,7 +303,9 @@ function loadHome() {
 function loadLastWorkout() {
   const box = document.getElementById("lastWorkoutInfo");
 
-  if (!currentUser.history.length) {
+  if (!box || !currentUser) return;
+
+  if (!currentUser.history || !currentUser.history.length) {
     box.innerText = "Nenhum treino registrado ainda.";
     return;
   }
@@ -210,8 +313,8 @@ function loadLastWorkout() {
   const last = currentUser.history[currentUser.history.length - 1];
 
   box.innerHTML = `
-    <strong>${last.type}</strong><br>
-    ${last.date}
+    <strong>${last.type || "Treino"}</strong><br>
+    ${last.date || ""}
   `;
 }
 
@@ -234,6 +337,11 @@ function createNewWorkout() {
 
 function loadWorkoutsList() {
   const container = document.getElementById("workoutsList");
+
+  if (!container || !currentUser) return;
+
+  currentUser = normalizeUserData(currentUser);
+
   container.innerHTML = "";
 
   if (!currentUser.workouts.length) {
@@ -250,7 +358,7 @@ function loadWorkoutsList() {
     card.className = "workout-config-card";
 
     card.innerHTML = `
-      <h3>${workout.name}</h3>
+      <h3>${workout.name || "Treino"}</h3>
 
       <label>Nome do treino</label>
       <input 
@@ -259,6 +367,7 @@ function loadWorkoutsList() {
       />
 
       <label>Dias desse treino</label>
+
       <div class="chips workout-days">
         ${weekDays.map((day, index) => `
           <button
@@ -353,20 +462,36 @@ function loadWorkoutsList() {
   });
 }
 
+function findWorkout(workoutId) {
+  return currentUser.workouts.find(workout => Number(workout.id) === Number(workoutId));
+}
+
 function updateWorkoutName(workoutId, value) {
   const workout = findWorkout(workoutId);
+  if (!workout) return;
+
   workout.name = value || "Treino";
+
   saveUser();
 }
 
 function updateWorkoutTime(workoutId, value) {
   const workout = findWorkout(workoutId);
+  if (!workout) return;
+
   workout.time = value;
+
   saveUser();
 }
 
 function toggleWorkoutDay(workoutId, day) {
   const workout = findWorkout(workoutId);
+
+  if (!workout) return;
+
+  if (!Array.isArray(workout.days)) {
+    workout.days = [];
+  }
 
   if (workout.days.includes(day)) {
     workout.days = workout.days.filter(item => item !== day);
@@ -380,6 +505,8 @@ function toggleWorkoutDay(workoutId, day) {
 
 function addExerciseToWorkout(workoutId) {
   const workout = findWorkout(workoutId);
+
+  if (!workout) return;
 
   workout.exercises.push({
     name: "",
@@ -396,6 +523,8 @@ function addExerciseToWorkout(workoutId) {
 function updateExercise(workoutId, exerciseIndex, field, value) {
   const workout = findWorkout(workoutId);
 
+  if (!workout || !workout.exercises[exerciseIndex]) return;
+
   workout.exercises[exerciseIndex][field] =
     ["weight", "sets", "reps", "rest"].includes(field)
       ? Number(value)
@@ -407,9 +536,12 @@ function updateExercise(workoutId, exerciseIndex, field, value) {
 function removeExercise(workoutId, exerciseIndex) {
   const workout = findWorkout(workoutId);
 
+  if (!workout) return;
+
   if (!confirm("Deseja excluir este exercício?")) return;
 
   workout.exercises.splice(exerciseIndex, 1);
+
   saveUser();
   loadWorkoutsList();
 }
@@ -417,7 +549,7 @@ function removeExercise(workoutId, exerciseIndex) {
 function removeWorkout(workoutId) {
   if (!confirm("Deseja excluir este treino?")) return;
 
-  currentUser.workouts = currentUser.workouts.filter(workout => workout.id !== workoutId);
+  currentUser.workouts = currentUser.workouts.filter(workout => Number(workout.id) !== Number(workoutId));
 
   saveUser();
   loadWorkoutsList();
@@ -427,10 +559,6 @@ function saveUserAndReloadWorkouts() {
   saveUser();
   alert("Treino salvo com sucesso 💪");
   loadWorkoutsList();
-}
-
-function findWorkout(workoutId) {
-  return currentUser.workouts.find(workout => workout.id === workoutId);
 }
 
 function startWorkout() {
@@ -464,9 +592,12 @@ function registerExtraWorkout(type) {
 
 function loadHistory() {
   const container = document.getElementById("historyList");
+
+  if (!container || !currentUser) return;
+
   container.innerHTML = "";
 
-  if (!currentUser.history.length) {
+  if (!currentUser.history || !currentUser.history.length) {
     container.innerHTML = "<p>Nenhum treino registrado ainda.</p>";
     return;
   }
@@ -476,8 +607,8 @@ function loadHistory() {
     div.className = "history-item";
 
     div.innerHTML = `
-      <strong>${item.type}</strong>
-      <span>${item.date}</span>
+      <strong>${item.type || "Treino"}</strong>
+      <span>${item.date || ""}</span>
     `;
 
     container.appendChild(div);
@@ -485,6 +616,8 @@ function loadHistory() {
 }
 
 function loadSettings() {
+  if (!currentUser) return;
+
   document.getElementById("settingsName").value = currentUser.name || "";
   document.getElementById("settingsEmail").value = currentUser.email || "";
   document.getElementById("settingsWaterGoal").value = currentUser.waterGoal || "";
@@ -512,14 +645,20 @@ function saveSettings() {
   showHome();
 }
 
-function saveUser() {
-  localStorage.setItem("miaufitUser", JSON.stringify(currentUser));
-}
-
 window.addEventListener("DOMContentLoaded", () => {
-  loadSession();
+  try {
+    loadSession();
 
-  if (!localStorage.getItem("miaufitSession")) {
-    modal.classList.add("active");
+    if (!localStorage.getItem("miaufitSession")) {
+      modal.classList.add("active");
+    }
+  } catch (error) {
+    console.error("Erro ao carregar o MiauFit:", error);
+
+    localStorage.removeItem("miaufitSession");
+
+    if (modal) {
+      modal.classList.add("active");
+    }
   }
 });
