@@ -194,22 +194,22 @@ function createAccount() {
   document.querySelectorAll(".exercise-item").forEach(item => {
     exercises.push({
       name:
-        item.querySelector(".exercise-name").value,
+        item.querySelector(".exercise-name").value || "",
 
       weight:
-        item.querySelector(".exercise-weight").value,
+        item.querySelector(".exercise-weight").value || 0,
 
       sets: Number(
         item.querySelector(".exercise-sets").value
-      ),
+      ) || 0,
 
       reps: Number(
         item.querySelector(".exercise-reps").value
-      ),
+      ) || 0,
 
       rest: Number(
         item.querySelector(".exercise-rest").value
-      )
+      ) || 0
     });
   });
 
@@ -319,12 +319,20 @@ function logout() {
 }
 
 function getTodayWorkout() {
+  if (
+    !currentUser ||
+    !currentUser.workouts
+  ) {
+    return null;
+  }
+
   const today = new Date().getDay();
 
   const workouts =
     Object.values(currentUser.workouts);
 
   return workouts.find(workout =>
+    workout.days &&
     workout.days.includes(today)
   );
 }
@@ -357,10 +365,12 @@ function loadHome() {
 
   if (todayWorkout) {
     todayWorkoutName.innerText =
-      todayWorkout.name;
+      todayWorkout.name || "Treino";
 
     todayWorkoutSchedule.innerText =
-      `Horário: ${todayWorkout.time || "Não definido"}`;
+      `Horário: ${
+        todayWorkout.time || "Não definido"
+      }`;
 
     startButton.disabled = false;
 
@@ -373,7 +383,7 @@ function loadHome() {
       "Hoje é dia de descanso 🧘";
 
     todayWorkoutSchedule.innerText =
-      "Nenhum treino programado para hoje.";
+      "Nenhum treino configurado para hoje.";
 
     startButton.disabled = true;
 
@@ -384,9 +394,16 @@ function loadHome() {
   }
 
   homeGoalsInfo.innerHTML = `
-    💧 Meta de água: ${currentUser.waterGoal || 0}ml <br>
-    ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg <br>
-    🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
+    💧 Meta de água:
+    ${currentUser.waterGoal || 0}ml
+    <br><br>
+
+    ⚖️ Peso inicial:
+    ${currentUser.initialWeight || 0}kg
+    <br><br>
+
+    🎯 Peso objetivo:
+    ${currentUser.goalWeight || 0}kg
   `;
 
   loadLastWorkout();
@@ -422,7 +439,7 @@ function startWorkout() {
   }
 
   currentWorkoutName =
-    todayWorkout.name;
+    todayWorkout.name || "Treino";
 
   currentWorkoutExercises =
     todayWorkout.exercises || [];
@@ -450,25 +467,28 @@ function openExercise() {
 
   document.getElementById(
     "currentWorkoutName"
-  ).innerText = currentWorkoutName;
+  ).innerText =
+    currentWorkoutName || "Treino";
 
   document.getElementById(
     "currentExerciseName"
-  ).innerText = exercise.name;
+  ).innerText =
+    exercise.name || "Exercício";
 
   document.getElementById(
     "currentSet"
   ).innerText =
-    `${currentSet}/${exercise.sets}`;
+    `${currentSet}/${exercise.sets || 0}`;
 
   document.getElementById(
     "currentReps"
-  ).innerText = exercise.reps;
+  ).innerText =
+    exercise.reps || 0;
 
   document.getElementById(
     "currentWeight"
   ).innerText =
-    `${exercise.weight}kg`;
+    `${exercise.weight || 0}kg`;
 
   document.getElementById(
     "exerciseVideo"
@@ -492,7 +512,7 @@ function finishSet() {
   const exercise =
     currentWorkoutExercises[currentExerciseIndex];
 
-  startRest(exercise.rest);
+  startRest(exercise.rest || 0);
 }
 
 function startRest(seconds) {
@@ -644,23 +664,26 @@ function loadHistory() {
 function loadSettings() {
   document.getElementById(
     "settingsName"
-  ).value = currentUser.name;
+  ).value = currentUser.name || "";
 
   document.getElementById(
     "settingsEmail"
-  ).value = currentUser.email;
+  ).value = currentUser.email || "";
 
   document.getElementById(
     "settingsWaterGoal"
-  ).value = currentUser.waterGoal;
+  ).value =
+    currentUser.waterGoal || "";
 
   document.getElementById(
     "settingsInitialWeight"
-  ).value = currentUser.initialWeight;
+  ).value =
+    currentUser.initialWeight || "";
 
   document.getElementById(
     "settingsGoalWeight"
-  ).value = currentUser.goalWeight;
+  ).value =
+    currentUser.goalWeight || "";
 }
 
 function saveSettings() {
@@ -728,7 +751,7 @@ function onWorkoutFilterChange() {
   document.getElementById(
     "selectedWorkoutTitle"
   ).innerText =
-    `Treino: ${workout.name}`;
+    `Treino: ${workout.name || workoutName}`;
 
   const details =
     document.getElementById(
@@ -744,15 +767,26 @@ function onWorkoutFilterChange() {
             .join(", ")
         : "Nenhum dia definido"
     }
+
     <br><br>
 
     ⏰ Horário:
     ${workout.time || "Não definido"}
+
+    <br><br>
+
+    🏋️ Exercícios:
+    ${
+      workout.exercises.length
+        ? workout.exercises.length
+        : 0
+    }
   `;
 
   document.getElementById(
     "workoutConfigTime"
-  ).value = workout.time || "";
+  ).value =
+    workout.time || "";
 
   document
     .querySelectorAll(
@@ -761,10 +795,10 @@ function onWorkoutFilterChange() {
     .forEach(button => {
       const day = Number(button.dataset.day);
 
+      button.classList.remove("active");
+
       if (workout.days.includes(day)) {
         button.classList.add("active");
-      } else {
-        button.classList.remove("active");
       }
 
       button.onclick = () => {
@@ -802,19 +836,48 @@ function loadWorkoutExercises(workout) {
       div.className = "exercise-item";
 
       div.innerHTML = `
-        <h4>${exercise.name || "Exercício"}</h4>
+        <h4>
+          ${exercise.name || "Exercício"}
+        </h4>
 
-        <input class="settings-exercise-name" value="${exercise.name}" placeholder="Nome do exercício" />
+        <input
+          class="settings-exercise-name"
+          value="${exercise.name || ""}"
+          placeholder="Nome do exercício"
+        />
 
-        <input class="settings-exercise-weight" type="number" value="${exercise.weight}" placeholder="Peso utilizado" />
+        <input
+          class="settings-exercise-weight"
+          type="number"
+          value="${exercise.weight || 0}"
+          placeholder="Peso utilizado"
+        />
 
-        <input class="settings-exercise-sets" type="number" value="${exercise.sets}" placeholder="Quantidade de séries" />
+        <input
+          class="settings-exercise-sets"
+          type="number"
+          value="${exercise.sets || 0}"
+          placeholder="Quantidade de séries"
+        />
 
-        <input class="settings-exercise-reps" type="number" value="${exercise.reps}" placeholder="Quantidade de repetições" />
+        <input
+          class="settings-exercise-reps"
+          type="number"
+          value="${exercise.reps || 0}"
+          placeholder="Quantidade de repetições"
+        />
 
-        <input class="settings-exercise-rest" type="number" value="${exercise.rest}" placeholder="Descanso em segundos" />
+        <input
+          class="settings-exercise-rest"
+          type="number"
+          value="${exercise.rest || 0}"
+          placeholder="Descanso em segundos"
+        />
 
-        <button class="secondary" onclick="removeExercise(${index})">
+        <button
+          class="secondary"
+          onclick="removeExercise(${index})"
+        >
           Excluir exercício
         </button>
       `;
@@ -832,7 +895,7 @@ function addExerciseToSelectedWorkout() {
     workoutName
   ].exercises.push({
     name: "",
-    weight: "",
+    weight: 0,
     sets: 3,
     reps: 12,
     rest: 60
@@ -885,30 +948,30 @@ function saveSelectedWorkoutConfig() {
         name:
           item.querySelector(
             ".settings-exercise-name"
-          ).value,
+          ).value || "",
 
         weight:
           item.querySelector(
             ".settings-exercise-weight"
-          ).value,
+          ).value || 0,
 
         sets: Number(
           item.querySelector(
             ".settings-exercise-sets"
           ).value
-        ),
+        ) || 0,
 
         reps: Number(
           item.querySelector(
             ".settings-exercise-reps"
           ).value
-        ),
+        ) || 0,
 
         rest: Number(
           item.querySelector(
             ".settings-exercise-rest"
           ).value
-        )
+        ) || 0
       });
     });
 
