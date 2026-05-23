@@ -21,43 +21,45 @@ let restInterval = null;
 
 function hideAllScreens() {
   Object.values(screens).forEach(screen => {
-    if (screen) screen.classList.add("hidden");
+    if (screen) {
+      screen.classList.add("hidden");
+    }
   });
 }
 
 function showLogin() {
-  if (modal) modal.classList.remove("active");
+  modal.classList.remove("active");
   hideAllScreens();
-  if (screens.login) screens.login.classList.remove("hidden");
+  screens.login.classList.remove("hidden");
 }
 
 function showRegister() {
-  if (modal) modal.classList.remove("active");
+  modal.classList.remove("active");
   hideAllScreens();
-  if (screens.register) screens.register.classList.remove("hidden");
+  screens.register.classList.remove("hidden");
 }
 
 function showHome() {
   hideAllScreens();
-  if (screens.home) screens.home.classList.remove("hidden");
+  screens.home.classList.remove("hidden");
   loadHome();
 }
 
 function showHistory() {
   hideAllScreens();
-  if (screens.history) screens.history.classList.remove("hidden");
+  screens.history.classList.remove("hidden");
   loadHistory();
 }
 
 function showSettings() {
   hideAllScreens();
-  if (screens.settings) screens.settings.classList.remove("hidden");
+  screens.settings.classList.remove("hidden");
   loadSettings();
 }
 
 function showExercisesSettings() {
   hideAllScreens();
-  if (screens.exercisesSettings) screens.exercisesSettings.classList.remove("hidden");
+  screens.exercisesSettings.classList.remove("hidden");
   loadWorkoutsList();
 }
 
@@ -137,34 +139,30 @@ function loadSession() {
 
   if (session?.logged && user && session.email === user.email) {
     currentUser = user;
-
-    if (modal) modal.classList.remove("active");
-
+    modal.classList.remove("active");
     showHome();
     return;
   }
 
-  if (modal) modal.classList.add("active");
+  modal.classList.add("active");
 }
 
 function logout() {
   currentUser = null;
   localStorage.removeItem("miaufitSession");
-
   hideAllScreens();
-
-  if (modal) modal.classList.add("active");
+  modal.classList.add("active");
 }
 
 function createAccount() {
-  const name = document.getElementById("registerName")?.value.trim();
-  const email = document.getElementById("registerEmail")?.value.trim();
-  const password = document.getElementById("registerPassword")?.value;
-  const confirmPassword = document.getElementById("registerConfirmPassword")?.value;
-  const knowledgeLevel = document.getElementById("knowledgeLevel")?.value;
-  const waterGoal = document.getElementById("waterGoal")?.value;
-  const initialWeight = document.getElementById("initialWeight")?.value;
-  const goalWeight = document.getElementById("goalWeight")?.value;
+  const name = document.getElementById("registerName").value.trim();
+  const email = document.getElementById("registerEmail").value.trim();
+  const password = document.getElementById("registerPassword").value;
+  const confirmPassword = document.getElementById("registerConfirmPassword").value;
+  const knowledgeLevel = document.getElementById("knowledgeLevel").value;
+  const waterGoal = document.getElementById("waterGoal").value;
+  const initialWeight = document.getElementById("initialWeight").value;
+  const goalWeight = document.getElementById("goalWeight").value;
 
   if (!name || !email || !password) {
     alert("Preencha os dados principais.");
@@ -201,8 +199,8 @@ function createAccount() {
 }
 
 function login() {
-  const email = document.getElementById("loginEmail")?.value.trim();
-  const password = document.getElementById("loginPassword")?.value;
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
 
   let user = JSON.parse(localStorage.getItem("miaufitUser"));
   user = normalizeUserData(user);
@@ -247,55 +245,33 @@ function loadHome() {
   const restActions = document.getElementById("restDayActions");
   const homeGoalsInfo = document.getElementById("homeGoalsInfo");
 
-  if (greeting) {
-    greeting.innerText = `Oi, ${currentUser.name || "miau"} 🐾`;
-  }
+  greeting.innerText = `Oi, ${currentUser.name || "miau"} 🐾`;
 
   const todayWorkout = getTodayWorkout();
 
   if (todayWorkout) {
-    if (todayWorkoutName) {
-      todayWorkoutName.innerText = todayWorkout.name || "Treino";
-    }
+    todayWorkoutName.innerText = todayWorkout.name || "Treino";
+    todayWorkoutSchedule.innerText = `Horário: ${todayWorkout.time || "Não definido"}`;
 
-    if (todayWorkoutSchedule) {
-      todayWorkoutSchedule.innerText = `Horário: ${todayWorkout.time || "Não definido"}`;
-    }
+    startButton.disabled = false;
+    startButton.innerText = "Iniciar treino do dia";
 
-    if (startButton) {
-      startButton.disabled = false;
-      startButton.innerText = "Iniciar treino do dia";
-    }
-
-    if (restActions) {
-      restActions.classList.add("hidden");
-    }
+    restActions.classList.add("hidden");
   } else {
-    if (todayWorkoutName) {
-      todayWorkoutName.innerText = "Hoje é dia de descanso 🧘";
-    }
+    todayWorkoutName.innerText = "Hoje é dia de descanso 🧘";
+    todayWorkoutSchedule.innerText = "Nenhum treino cadastrado para hoje.";
 
-    if (todayWorkoutSchedule) {
-      todayWorkoutSchedule.innerText = "Nenhum treino cadastrado para hoje.";
-    }
+    startButton.disabled = true;
+    startButton.innerText = "Sem treino programado hoje";
 
-    if (startButton) {
-      startButton.disabled = true;
-      startButton.innerText = "Sem treino programado hoje";
-    }
-
-    if (restActions) {
-      restActions.classList.remove("hidden");
-    }
+    restActions.classList.remove("hidden");
   }
 
-  if (homeGoalsInfo) {
-    homeGoalsInfo.innerHTML = `
-      💧 Meta de água: ${currentUser.waterGoal || 0}ml<br><br>
-      ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg<br><br>
-      🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
-    `;
-  }
+  homeGoalsInfo.innerHTML = `
+    💧 Meta de água: ${currentUser.waterGoal || 0}ml<br><br>
+    ⚖️ Peso inicial: ${currentUser.initialWeight || 0}kg<br><br>
+    🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
+  `;
 
   loadLastWorkout();
 }
@@ -404,52 +380,91 @@ function loadWorkoutsList() {
       <div>
         ${workout.exercises.map((exercise, index) => `
           <div class="exercise-item">
-            <label>Nome do exercício</label>
-            <input 
-              value="${exercise.name || ""}" 
-              onchange="updateExercise(${workout.id}, ${index}, 'name', this.value)" 
-            />
+            <div
+              class="exercise-summary"
+              onclick="toggleExerciseForm(${workout.id}, ${index})"
+            >
+              <strong>${exercise.name || "Exercício sem nome"}</strong>
+              <span>
+                ${exercise.sets || 0} séries ·
+                ${exercise.reps || 0} repetições ·
+                ${exercise.weight || 0}kg ·
+                descanso de ${exercise.rest || 0}s
+              </span>
+            </div>
 
-            <label>Peso</label>
-            <input 
-              type="number" 
-              value="${exercise.weight || 0}" 
-              onchange="updateExercise(${workout.id}, ${index}, 'weight', this.value)" 
-            />
+            <div
+              class="exercise-form collapsed"
+              id="exerciseForm-${workout.id}-${index}"
+            >
+              <label>Nome do exercício</label>
+              <input
+                value="${exercise.name || ""}"
+                oninput="updateExercise(${workout.id}, ${index}, 'name', this.value, false)"
+                onchange="saveUserAndReloadWorkouts(false)"
+              />
 
-            <label>Séries</label>
-            <input 
-              type="number" 
-              value="${exercise.sets || 0}" 
-              onchange="updateExercise(${workout.id}, ${index}, 'sets', this.value)" 
-            />
+              <label>Peso usado</label>
+              <div class="weight-field">
+                <input
+                  type="number"
+                  value="${exercise.weight || 0}"
+                  oninput="updateExerciseWeight(${workout.id}, ${index}, this.value)"
+                />
+                <span class="weight-suffix">kg</span>
+              </div>
 
-            <label>Repetições</label>
-            <input 
-              type="number" 
-              value="${exercise.reps || 0}" 
-              onchange="updateExercise(${workout.id}, ${index}, 'reps', this.value)" 
-            />
+              <p
+                class="weight-preview"
+                id="weightPreview-${workout.id}-${index}"
+              >
+                Peso atual:
+                <strong>${exercise.weight || 0}kg</strong>
+              </p>
 
-            <label>Descanso em segundos</label>
-            <input 
-              type="number" 
-              value="${exercise.rest || 0}" 
-              onchange="updateExercise(${workout.id}, ${index}, 'rest', this.value)" 
-            />
+              <label>Séries</label>
+              <input
+                type="number"
+                value="${exercise.sets || 0}"
+                oninput="updateExercise(${workout.id}, ${index}, 'sets', this.value, false)"
+                onchange="saveUserAndReloadWorkouts(false)"
+              />
 
-            <button class="secondary" onclick="removeExercise(${workout.id}, ${index})">
-              Excluir exercício
-            </button>
+              <label>Repetições</label>
+              <input
+                type="number"
+                value="${exercise.reps || 0}"
+                oninput="updateExercise(${workout.id}, ${index}, 'reps', this.value, false)"
+                onchange="saveUserAndReloadWorkouts(false)"
+              />
+
+              <label>Descanso em segundos</label>
+              <input
+                type="number"
+                value="${exercise.rest || 0}"
+                oninput="updateExercise(${workout.id}, ${index}, 'rest', this.value, false)"
+                onchange="saveUserAndReloadWorkouts(false)"
+              />
+
+              <button
+                class="secondary"
+                onclick="removeExercise(${workout.id}, ${index})"
+              >
+                Excluir exercício
+              </button>
+            </div>
           </div>
         `).join("")}
       </div>
 
-      <button class="secondary" onclick="addExerciseToWorkout(${workout.id})">
-        Adicionar exercício
+      <button
+        class="secondary"
+        onclick="addExerciseToWorkout(${workout.id})"
+      >
+        Adicionar outro exercício
       </button>
 
-      <button onclick="saveUserAndReloadWorkouts()">
+      <button onclick="saveUserAndReloadWorkouts(true)">
         Salvar treino
       </button>
 
@@ -463,11 +478,14 @@ function loadWorkoutsList() {
 }
 
 function findWorkout(workoutId) {
+  if (!currentUser || !Array.isArray(currentUser.workouts)) return null;
+
   return currentUser.workouts.find(workout => Number(workout.id) === Number(workoutId));
 }
 
 function updateWorkoutName(workoutId, value) {
   const workout = findWorkout(workoutId);
+
   if (!workout) return;
 
   workout.name = value || "Treino";
@@ -477,6 +495,7 @@ function updateWorkoutName(workoutId, value) {
 
 function updateWorkoutTime(workoutId, value) {
   const workout = findWorkout(workoutId);
+
   if (!workout) return;
 
   workout.time = value;
@@ -503,10 +522,20 @@ function toggleWorkoutDay(workoutId, day) {
   loadWorkoutsList();
 }
 
+function toggleExerciseForm(workoutId, exerciseIndex) {
+  const form = document.getElementById(`exerciseForm-${workoutId}-${exerciseIndex}`);
+
+  if (!form) return;
+
+  form.classList.toggle("collapsed");
+}
+
 function addExerciseToWorkout(workoutId) {
   const workout = findWorkout(workoutId);
 
   if (!workout) return;
+
+  saveUser();
 
   workout.exercises.push({
     name: "",
@@ -518,9 +547,22 @@ function addExerciseToWorkout(workoutId) {
 
   saveUser();
   loadWorkoutsList();
+
+  setTimeout(() => {
+    const lastIndex = workout.exercises.length - 1;
+    const form = document.getElementById(`exerciseForm-${workoutId}-${lastIndex}`);
+
+    if (form) {
+      form.classList.remove("collapsed");
+      form.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+  }, 100);
 }
 
-function updateExercise(workoutId, exerciseIndex, field, value) {
+function updateExercise(workoutId, exerciseIndex, field, value, shouldReload = false) {
   const workout = findWorkout(workoutId);
 
   if (!workout || !workout.exercises[exerciseIndex]) return;
@@ -529,6 +571,31 @@ function updateExercise(workoutId, exerciseIndex, field, value) {
     ["weight", "sets", "reps", "rest"].includes(field)
       ? Number(value)
       : value;
+
+  saveUser();
+
+  if (shouldReload) {
+    loadWorkoutsList();
+  }
+}
+
+function updateExerciseWeight(workoutId, exerciseIndex, value) {
+  const workout = findWorkout(workoutId);
+
+  if (!workout || !workout.exercises[exerciseIndex]) return;
+
+  const numericValue = Number(value) || 0;
+
+  workout.exercises[exerciseIndex].weight = numericValue;
+
+  const preview = document.getElementById(`weightPreview-${workoutId}-${exerciseIndex}`);
+
+  if (preview) {
+    preview.innerHTML = `
+      Peso atual:
+      <strong>${numericValue}kg</strong>
+    `;
+  }
 
   saveUser();
 }
@@ -555,9 +622,13 @@ function removeWorkout(workoutId) {
   loadWorkoutsList();
 }
 
-function saveUserAndReloadWorkouts() {
+function saveUserAndReloadWorkouts(showAlert = true) {
   saveUser();
-  alert("Treino salvo com sucesso 💪");
+
+  if (showAlert) {
+    alert("Treino salvo com sucesso 💪");
+  }
+
   loadWorkoutsList();
 }
 
@@ -575,7 +646,134 @@ function startWorkout() {
     return;
   }
 
-  alert(`Treino iniciado: ${currentWorkout.name}`);
+  openExercise();
+}
+
+function openExercise() {
+  hideAllScreens();
+
+  if (screens.workout) {
+    screens.workout.classList.remove("hidden");
+  }
+
+  const exercise = currentWorkout.exercises[currentExerciseIndex];
+
+  document.getElementById("currentWorkoutName").innerText =
+    currentWorkout.name || "Treino";
+
+  document.getElementById("currentExerciseName").innerText =
+    exercise.name || "Exercício";
+
+  document.getElementById("currentSet").innerText =
+    `${currentSet}/${exercise.sets || 0}`;
+
+  document.getElementById("currentReps").innerText =
+    exercise.reps || 0;
+
+  document.getElementById("currentWeight").innerText =
+    `${exercise.weight || 0}kg`;
+
+  document.getElementById("exerciseVideo").href =
+    "https://youtube.com";
+}
+
+function pauseSet() {
+  const reps = prompt("Quantas repetições você fez até agora?");
+
+  if (reps) {
+    alert(`Série pausada com ${reps} repetições registradas.`);
+  }
+}
+
+function finishSet() {
+  if (!currentWorkout) return;
+
+  const exercise = currentWorkout.exercises[currentExerciseIndex];
+
+  startRest(exercise.rest || 0);
+}
+
+function startRest(seconds) {
+  hideAllScreens();
+
+  if (screens.rest) {
+    screens.rest.classList.remove("hidden");
+  }
+
+  const timer = document.getElementById("restTimer");
+
+  let remaining = Number(seconds) || 0;
+
+  timer.innerText = remaining;
+
+  clearInterval(restInterval);
+
+  if (remaining <= 0) {
+    timer.innerText = "Fim do descanso!";
+
+    setTimeout(() => {
+      goNext();
+    }, 1000);
+
+    return;
+  }
+
+  restInterval = setInterval(() => {
+    remaining--;
+
+    timer.innerText = remaining;
+
+    if (remaining <= 0) {
+      clearInterval(restInterval);
+
+      document.getElementById("restScreen").classList.add("finished");
+
+      timer.innerText = "Fim do descanso!";
+
+      setTimeout(() => {
+        document.getElementById("restScreen").classList.remove("finished");
+        goNext();
+      }, 2000);
+    }
+  }, 1000);
+}
+
+function goNext() {
+  const exercise = currentWorkout.exercises[currentExerciseIndex];
+
+  if (currentSet < exercise.sets) {
+    currentSet++;
+    openExercise();
+    return;
+  }
+
+  const confirmChange = confirm("Deseja ir para o próximo exercício?");
+
+  if (!confirmChange) {
+    return;
+  }
+
+  currentExerciseIndex++;
+  currentSet = 1;
+
+  if (currentExerciseIndex >= currentWorkout.exercises.length) {
+    finishWorkout();
+    return;
+  }
+
+  openExercise();
+}
+
+function finishWorkout() {
+  currentUser.history.push({
+    type: currentWorkout.name || "Treino",
+    date: new Date().toLocaleDateString("pt-BR")
+  });
+
+  saveUser();
+
+  alert("Treino concluído 💪");
+  showHome();
 }
 
 function registerExtraWorkout(type) {
