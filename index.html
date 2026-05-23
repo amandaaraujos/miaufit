@@ -11,7 +11,7 @@
   <div id="welcomeModal" class="modal active">
     <div class="modal-card">
       <h1>🐾 MiauFit</h1>
-      <p>Seu cantinho para registrar treinos, acompanhar evolução e não esquecer de se cuidar.</p>
+      <p>Seu cantinho para registrar treinos, acompanhar evolução e cuidar de você no seu ritmo.</p>
 
       <button onclick="showLogin()">Já tenho conta</button>
       <button class="secondary" onclick="showRegister()">Criar uma conta</button>
@@ -22,33 +22,35 @@
 
     <section id="loginScreen" class="screen hidden">
       <h2>Entrar no MiauFit</h2>
-      <p>Que bom te ver de novo 💪</p>
+      <p>Que bom te ver de novo. Bora cuidar do corpinho? 💪</p>
 
       <input id="loginEmail" type="email" placeholder="E-mail" />
       <input id="loginPassword" type="password" placeholder="Senha" />
 
       <button onclick="login()">Entrar</button>
-      <button class="text-button" onclick="showRegister()">Criar conta</button>
+      <button class="text-button" onclick="showRegister()">Criar uma conta</button>
     </section>
 
     <section id="registerScreen" class="screen hidden">
       <h2>Criar conta</h2>
-      <p>Vamos montar seu plano de treino pessoal.</p>
+      <p>Vamos montar uma rotina de treino com a sua cara.</p>
 
-      <input id="registerName" placeholder="Nome" />
+      <input id="registerName" type="text" placeholder="Nome" />
       <input id="registerEmail" type="email" placeholder="E-mail" />
       <input id="registerPassword" type="password" placeholder="Senha" />
       <input id="registerConfirmPassword" type="password" placeholder="Confirmar senha" />
 
       <h3>Dias de treino</h3>
+      <p class="helper-text">Selecione os dias em que você pretende treinar.</p>
+
       <div class="chips" id="trainingDays">
-        <button data-day="0">Dom</button>
-        <button data-day="1">Seg</button>
-        <button data-day="2">Ter</button>
-        <button data-day="3">Qua</button>
-        <button data-day="4">Qui</button>
-        <button data-day="5">Sex</button>
-        <button data-day="6">Sáb</button>
+        <button type="button" data-day="0">Dom</button>
+        <button type="button" data-day="1">Seg</button>
+        <button type="button" data-day="2">Ter</button>
+        <button type="button" data-day="3">Qua</button>
+        <button type="button" data-day="4">Qui</button>
+        <button type="button" data-day="5">Sex</button>
+        <button type="button" data-day="6">Sáb</button>
       </div>
 
       <select id="trainingType">
@@ -71,23 +73,29 @@
       <div id="muscleGroupBox" class="hidden">
         <h3>Tipo de musculação</h3>
         <select id="muscleGroup">
-          <option value="">Selecione</option>
+          <option value="">Selecione o foco do treino</option>
           <option value="Superiores">Treino de superiores</option>
           <option value="Inferiores">Treino de inferiores</option>
           <option value="Corpo todo">Corpo todo</option>
         </select>
       </div>
 
+      <h3>Lembrete e metas</h3>
+
+      <label for="reminderTime">Horário do treino</label>
       <input id="reminderTime" type="time" />
+
       <input id="waterGoal" type="number" placeholder="Meta de água por dia em ml" />
       <input id="initialWeight" type="number" placeholder="Peso inicial" />
       <input id="goalWeight" type="number" placeholder="Peso objetivo" />
 
       <h3>Exercícios</h3>
+      <p class="helper-text">Cadastre sua ficha inicial. Depois você poderá editar tudo na área logada.</p>
+
       <div id="exerciseList"></div>
 
-      <button class="secondary" onclick="addExercise()">Adicionar exercício</button>
-      <button onclick="createAccount()">Finalizar cadastro</button>
+      <button type="button" class="secondary" onclick="addExercise()">Adicionar exercício</button>
+      <button type="button" onclick="createAccount()">Finalizar cadastro</button>
     </section>
 
     <section id="homeScreen" class="screen hidden">
@@ -96,17 +104,26 @@
           <h1 id="homeGreeting">Oi!</h1>
           <p id="todayWorkoutText">Vamos ver o treino de hoje?</p>
         </div>
-        <button onclick="logout()">Sair</button>
+
+        <button type="button" onclick="logout()">Sair</button>
       </header>
 
       <div class="card highlight">
         <h2>Hoje é dia de:</h2>
         <p id="todayWorkoutName">Carregando...</p>
-        <button id="startWorkoutButton" onclick="startWorkout()">Iniciar treino do dia</button>
+
+        <button id="startWorkoutButton" type="button" onclick="startWorkout()">
+          Iniciar treino do dia
+        </button>
 
         <div id="restDayActions" class="hidden">
-          <button onclick="registerExtraWorkout('Treino extra')">Registrar treino extra</button>
-          <button class="secondary" onclick="registerExtraWorkout('Treino de substituição')">Treino de substituição</button>
+          <button type="button" onclick="registerExtraWorkout('Treino extra')">
+            Registrar treino extra
+          </button>
+
+          <button type="button" class="secondary" onclick="registerExtraWorkout('Treino de substituição')">
+            Registrar treino de substituição
+          </button>
         </div>
       </div>
 
@@ -115,15 +132,22 @@
         <p id="lastWorkoutInfo">Você ainda não registrou treinos.</p>
       </div>
 
+      <div class="card">
+        <h2>Suas metas</h2>
+        <p id="homeGoalsInfo">Carregando suas metas...</p>
+      </div>
+
       <nav class="bottom-nav">
-        <button onclick="showHome()">Início</button>
-        <button onclick="showHistory()">Histórico</button>
-        <button onclick="showSettings()">Conta</button>
+        <button type="button" onclick="showHome()">Início</button>
+        <button type="button" onclick="showHistory()">Histórico</button>
+        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
+        <button type="button" onclick="showSettings()">Conta</button>
       </nav>
     </section>
 
     <section id="workoutScreen" class="screen hidden">
       <h2 id="currentExerciseName">Exercício</h2>
+      <p class="helper-text">Faça no seu ritmo. O importante é registrar sua evolução.</p>
 
       <div class="card workout-card">
         <p><strong>Série:</strong> <span id="currentSet">1</span></p>
@@ -134,8 +158,8 @@
           Ver execução no YouTube
         </a>
 
-        <button onclick="pauseSet()">Pausar série</button>
-        <button onclick="finishSet()">Finalizar série</button>
+        <button type="button" onclick="pauseSet()">Pausar série</button>
+        <button type="button" onclick="finishSet()">Finalizar série</button>
       </div>
     </section>
 
@@ -150,21 +174,63 @@
 
       <div id="historyList"></div>
 
-      <button onclick="showHome()">Voltar</button>
+      <button type="button" class="secondary" onclick="showHome()">Voltar</button>
+
+      <nav class="bottom-nav">
+        <button type="button" onclick="showHome()">Início</button>
+        <button type="button" onclick="showHistory()">Histórico</button>
+        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
+        <button type="button" onclick="showSettings()">Conta</button>
+      </nav>
+    </section>
+
+    <section id="exercisesSettingsScreen" class="screen hidden">
+      <h2>Configurar exercícios</h2>
+      <p>Edite sua ficha sempre que seu treino mudar.</p>
+
+      <div id="settingsExerciseList"></div>
+
+      <button type="button" class="secondary" onclick="addExerciseToSettings()">
+        Adicionar exercício
+      </button>
+
+      <button type="button" onclick="saveExercisesSettings()">
+        Salvar exercícios
+      </button>
+
+      <button type="button" class="secondary" onclick="showHome()">
+        Voltar
+      </button>
+
+      <nav class="bottom-nav">
+        <button type="button" onclick="showHome()">Início</button>
+        <button type="button" onclick="showHistory()">Histórico</button>
+        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
+        <button type="button" onclick="showSettings()">Conta</button>
+      </nav>
     </section>
 
     <section id="settingsScreen" class="screen hidden">
       <h2>Configurações da conta</h2>
       <p>Atualize seus dados sempre que precisar.</p>
 
-      <input id="settingsName" placeholder="Nome" />
+      <input id="settingsName" type="text" placeholder="Nome" />
       <input id="settingsEmail" type="email" placeholder="E-mail" />
       <input id="settingsPassword" type="password" placeholder="Nova senha" />
-      <input id="settingsWaterGoal" type="number" placeholder="Meta de água" />
+
+      <h3>Metas</h3>
+      <input id="settingsWaterGoal" type="number" placeholder="Meta de água em ml" />
       <input id="settingsGoalWeight" type="number" placeholder="Peso objetivo" />
 
-      <button onclick="saveSettings()">Salvar alterações</button>
-      <button class="secondary" onclick="showHome()">Voltar</button>
+      <button type="button" onclick="saveSettings()">Salvar alterações</button>
+      <button type="button" class="secondary" onclick="showHome()">Voltar</button>
+
+      <nav class="bottom-nav">
+        <button type="button" onclick="showHome()">Início</button>
+        <button type="button" onclick="showHistory()">Histórico</button>
+        <button type="button" onclick="showExercisesSettings()">Exercícios</button>
+        <button type="button" onclick="showSettings()">Conta</button>
+      </nav>
     </section>
 
   </main>
