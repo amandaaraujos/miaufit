@@ -12,9 +12,6 @@
 
   --border: #f4cfaf;
 
-  --success: #57b15d;
-  --danger: #ef5b5b;
-
   --shadow: 0 12px 30px rgba(72, 40, 15, 0.12);
 
   --radius-xl: 28px;
@@ -44,7 +41,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -81,7 +79,7 @@ h2 {
 }
 
 h3 {
-  margin-top: 28px;
+  margin-top: 24px;
   margin-bottom: 10px;
 }
 
@@ -97,7 +95,8 @@ p {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--border);
   background: #fff;
@@ -111,7 +110,8 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(255, 138, 61, 0.15);
 }
@@ -178,6 +178,7 @@ button.text-button:hover {
 .modal {
   position: fixed;
   inset: 0;
+
   background: rgba(41, 23, 13, 0.45);
 
   display: none;
@@ -185,6 +186,7 @@ button.text-button:hover {
   justify-content: center;
 
   padding: 24px;
+
   z-index: 100;
 }
 
@@ -271,6 +273,12 @@ button.text-button:hover {
   color: var(--text);
 
   border: 2px solid transparent;
+
+  transition: 0.2s;
+}
+
+.chips button:hover {
+  background: #ffd9b8;
 }
 
 .chips button.active {
@@ -479,42 +487,52 @@ button.text-button:hover {
   line-height: 1.8;
 }
 
-#selectedWorkoutTitle {
-  margin-top: 0;
+#workoutsList {
+  margin-top: 20px;
 }
 
-#selectedWorkoutDetails {
-  background: #fff7ed;
+.workout-config-card {
+  background: #fffaf5;
+
   border: 1px solid var(--border);
+
+  border-radius: var(--radius-xl);
+
+  padding: 20px;
+
+  margin-bottom: 18px;
+
+  box-shadow: var(--shadow);
+}
+
+.workout-config-card h3 {
+  margin-bottom: 6px;
+}
+
+.workout-days {
+  margin-top: 16px;
+}
+
+.workout-details {
+  margin-top: 12px;
+  background: #fff4e8;
   border-radius: var(--radius-md);
   padding: 14px;
-  margin-top: 10px;
   line-height: 1.7;
 }
 
-#settingsExerciseList:empty::before {
-  content: "Nenhum exercício cadastrado para este treino ainda.";
-
-  display: block;
-
-  color: var(--muted);
-
-  background: #fff7ed;
-
-  border: 1px dashed var(--border);
-
-  border-radius: var(--radius-md);
-
-  padding: 16px;
-
-  text-align: center;
+.workout-details strong {
+  color: var(--text);
 }
 
-#startWorkoutButton:disabled {
-  opacity: 0.55;
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
 }
 
 @media (max-width: 520px) {
+
   .app {
     padding: 16px;
   }
@@ -537,6 +555,7 @@ button.text-button:hover {
 }
 
 @media (max-width: 380px) {
+
   .chips {
     grid-template-columns: repeat(2, 1fr);
   }
