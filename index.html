@@ -418,8 +418,52 @@
       <h2>Histórico de treinos</h2>
 
       <p>
-        Veja os dias em que você se movimentou.
+        Veja os dias em que você se movimentou e registre treinos anteriores.
       </p>
+
+      <div class="card">
+        <h3>Registrar treino anterior</h3>
+
+        <p class="helper-text">
+          Use esta opção para adicionar treinos que você já fez e manter sua meta atualizada.
+        </p>
+
+        <label for="pastWorkoutDate">Data do treino</label>
+        <input
+          id="pastWorkoutDate"
+          type="date"
+        />
+
+        <label for="pastWorkoutType">Tipo de treino</label>
+        <input
+          id="pastWorkoutType"
+          type="text"
+          placeholder="Exemplo: Superiores, Yoga, Corrida"
+        />
+
+        <label for="pastWorkoutNote">Observação</label>
+        <textarea
+          id="pastWorkoutNote"
+          placeholder="Opcional: como foi o treino, carga usada, sensação etc."
+        ></textarea>
+
+        <button
+          type="button"
+          onclick="registerPastWorkout()"
+        >
+          Registrar treino anterior
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>Aumentos de carga</h3>
+
+        <p class="helper-text">
+          Sempre que você aumenta o peso de um exercício, o MiauFit registra esse avanço aqui.
+        </p>
+
+        <div id="loadProgressList"></div>
+      </div>
 
       <div id="historyList"></div>
 
