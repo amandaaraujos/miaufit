@@ -150,6 +150,13 @@
         placeholder="65kg"
       />
 
+      <label for="trainingDaysGoal">Meta de dias de treino</label>
+      <input
+        id="trainingDaysGoal"
+        type="number"
+        placeholder="Exemplo: 20 treinos no mês"
+      />
+
       <button type="button" onclick="createAccount()">
         Finalizar cadastro
       </button>
@@ -219,6 +226,21 @@
 
         </div>
 
+      </div>
+
+      <div class="card">
+        <h2>Meta de treinos</h2>
+
+        <p id="trainingGoalInfo">
+          Carregando sua meta...
+        </p>
+
+        <div class="goal-progress">
+          <div
+            id="trainingGoalProgressBar"
+            class="goal-progress-bar"
+          ></div>
+        </div>
       </div>
 
       <div class="card">
@@ -325,7 +347,7 @@
       </h2>
 
       <p class="helper-text">
-        Faça no seu ritmo. O importante é registrar sua evolução.
+        Faça no seu ritmo. A partir da primeira série, o dia já conta como treino feito.
       </p>
 
       <div class="card workout-card">
@@ -366,6 +388,14 @@
           Finalizar série
         </button>
 
+        <button
+          type="button"
+          class="secondary"
+          onclick="finishWorkoutEarly()"
+        >
+          Encerrar treino agora
+        </button>
+
       </div>
 
     </section>
@@ -373,6 +403,14 @@
     <section id="restScreen" class="screen rest hidden">
       <h1>Descanso</h1>
       <p id="restTimer">00:00</p>
+
+      <button
+        type="button"
+        class="secondary rest-exit-button"
+        onclick="finishWorkoutEarly()"
+      >
+        Encerrar treino
+      </button>
     </section>
 
     <section id="historyScreen" class="screen hidden">
@@ -450,6 +488,13 @@
       <input
         id="settingsGoalWeight"
         type="number"
+      />
+
+      <label for="settingsTrainingDaysGoal">Meta de dias de treino</label>
+      <input
+        id="settingsTrainingDaysGoal"
+        type="number"
+        placeholder="Exemplo: 20 treinos no mês"
       />
 
       <button type="button" onclick="saveSettings()">
