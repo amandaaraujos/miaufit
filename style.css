@@ -109,6 +109,12 @@ textarea {
   transition: 0.2s;
 }
 
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -460,7 +466,8 @@ button.text-button:hover {
   background: #fff1e4;
 }
 
-.history-item {
+.history-item,
+.load-progress-item {
   background: white;
 
   border-left: 6px solid var(--primary);
@@ -474,10 +481,40 @@ button.text-button:hover {
   box-shadow: var(--shadow);
 }
 
-.history-item strong {
+.history-item strong,
+.load-progress-item strong {
   display: block;
   margin-bottom: 4px;
   color: var(--text);
+}
+
+.history-item span,
+.load-progress-item span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.load-progress-item {
+  border-left-color: var(--primary-dark);
+  background: #fffaf5;
+}
+
+.load-progress-item small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+#loadProgressList:empty::before {
+  content: "Nenhum aumento de carga registrado ainda.";
+  display: block;
+  color: var(--muted);
+  background: #fff7ed;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
 }
 
 .bottom-nav {
