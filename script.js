@@ -18,7 +18,9 @@ let currentWorkout = null;
 let currentExerciseIndex = 0;
 let currentSet = 1;
 let restInterval = null;
+let restTimeout = null;
 let openedExerciseKey = null;
+let workoutCountedToday = false;
 
 function hideAllScreens() {
   Object.values(screens).forEach(screen => {
@@ -41,24 +43,28 @@ function showRegister() {
 }
 
 function showHome() {
+  stopRestTimer();
   hideAllScreens();
   screens.home.classList.remove("hidden");
   loadHome();
 }
 
 function showHistory() {
+  stopRestTimer();
   hideAllScreens();
   screens.history.classList.remove("hidden");
   loadHistory();
 }
 
 function showSettings() {
+  stopRestTimer();
   hideAllScreens();
   screens.settings.classList.remove("hidden");
   loadSettings();
 }
 
 function showExercisesSettings() {
+  stopRestTimer();
   hideAllScreens();
   screens.exercisesSettings.classList.remove("hidden");
   loadWorkoutsList();
@@ -66,6 +72,19 @@ function showExercisesSettings() {
 
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getTodayKey() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayDisplayDate() {
+  return new Date().toLocaleDateString("pt-BR");
 }
 
 function normalizeUserData(user) {
@@ -77,6 +96,10 @@ function normalizeUserData(user) {
 
   if (!user.workouts) {
     user.workouts = [];
+  }
+
+  if (!user.trainingDaysGoal) {
+    user.trainingDaysGoal = "";
   }
 
   if (!Array.isArray(user.workouts)) {
@@ -110,6 +133,21 @@ function normalizeUserData(user) {
     time: workout.time || "",
     exercises: Array.isArray(workout.exercises) ? workout.exercises : []
   }));
+
+  user.history = user.history.map(item => {
+    const fallbackDateKey = item.dateKey || item.date || getTodayKey();
+
+    return {
+      id: item.id || Date.now() + Math.floor(Math.random() * 1000),
+      type: item.type || "Treino",
+      date: item.date || getTodayDisplayDate(),
+      dateKey: item.dateKey || fallbackDateKey,
+      status: item.status || "Treino registrado",
+      countsForGoal: item.countsForGoal !== false,
+      completed: Boolean(item.completed),
+      seriesCompleted: item.seriesCompleted || 0
+    };
+  });
 
   return user;
 }
@@ -151,6 +189,7 @@ function loadSession() {
 function logout() {
   currentUser = null;
   localStorage.removeItem("miaufitSession");
+  stopRestTimer();
   hideAllScreens();
   modal.classList.add("active");
 }
@@ -164,6 +203,7 @@ function createAccount() {
   const waterGoal = document.getElementById("waterGoal").value;
   const initialWeight = document.getElementById("initialWeight").value;
   const goalWeight = document.getElementById("goalWeight").value;
+  const trainingDaysGoal = document.getElementById("trainingDaysGoal")?.value || "";
 
   if (!name || !email || !password) {
     alert("Preencha os dados principais.");
@@ -188,6 +228,7 @@ function createAccount() {
     waterGoal,
     initialWeight,
     goalWeight,
+    trainingDaysGoal,
     workouts: [],
     history: []
   };
@@ -236,6 +277,68 @@ function getTodayWorkout() {
   ) || null;
 }
 
+function getCountedWorkoutDates() {
+  if (!currentUser || !Array.isArray(currentUser.history)) {
+    return [];
+  }
+
+  const uniqueDates = new Set();
+
+  currentUser.history.forEach(item => {
+    if (item.countsForGoal !== false && item.dateKey) {
+      uniqueDates.add(item.dateKey);
+    }
+  });
+
+  return Array.from(uniqueDates);
+}
+
+function hasWorkoutRegisteredToday() {
+  const todayKey = getTodayKey();
+
+  return currentUser.history.some(item =>
+    item.dateKey === todayKey && item.countsForGoal !== false
+  );
+}
+
+function findTodayHistoryItem() {
+  const todayKey = getTodayKey();
+
+  return currentUser.history.find(item =>
+    item.dateKey === todayKey && item.countsForGoal !== false
+  );
+}
+
+function registerWorkoutDayOnce(type, status = "Treino contabilizado", completed = false) {
+  if (!currentUser) return false;
+
+  const existingToday = findTodayHistoryItem();
+
+  if (existingToday) {
+    existingToday.type = existingToday.type || type;
+    existingToday.status = completed ? "Treino concluído" : existingToday.status;
+    existingToday.completed = existingToday.completed || completed;
+    existingToday.seriesCompleted = Math.max(existingToday.seriesCompleted || 0, 1);
+
+    saveUser();
+    return false;
+  }
+
+  currentUser.history.push({
+    id: Date.now(),
+    type,
+    date: getTodayDisplayDate(),
+    dateKey: getTodayKey(),
+    status,
+    countsForGoal: true,
+    completed,
+    seriesCompleted: 1
+  });
+
+  saveUser();
+  return true;
+}
+
 function loadHome() {
   if (!currentUser) return;
 
@@ -274,7 +377,44 @@ function loadHome() {
     🎯 Peso objetivo: ${currentUser.goalWeight || 0}kg
   `;
 
+  loadTrainingGoalInfo();
   loadLastWorkout();
+}
+
+function loadTrainingGoalInfo() {
+  const goalInfo = document.getElementById("trainingGoalInfo");
+  const progressBar = document.getElementById("trainingGoalProgressBar");
+
+  if (!goalInfo || !progressBar) return;
+
+  const goal = Number(currentUser.trainingDaysGoal) || 0;
+  const done = getCountedWorkoutDates().length;
+  const percentage = goal > 0 ? Math.min((done / goal) * 100, 100) : 0;
+
+  if (!goal) {
+    goalInfo.innerHTML = `
+      Você ainda não definiu uma meta de dias de treino.
+      <br>
+      Vá em <strong>Conta</strong> para configurar.
+    `;
+
+    progressBar.style.width = "0%";
+    return;
+  }
+
+  const remaining = Math.max(goal - done, 0);
+
+  goalInfo.innerHTML = `
+    Você fez <strong>${done}</strong> de <strong>${goal}</strong> treinos.
+    <br>
+    ${
+      remaining > 0
+        ? `Faltam <strong>${remaining}</strong> para bater sua meta.`
+        : "Meta batida. Miau, que orgulho! 🐾"
+    }
+  `;
+
+  progressBar.style.width = `${percentage}%`;
 }
 
 function loadLastWorkout() {
@@ -291,7 +431,8 @@ function loadLastWorkout() {
 
   box.innerHTML = `
     <strong>${last.type || "Treino"}</strong><br>
-    ${last.date || ""}
+    ${last.date || ""}<br>
+    <span>${last.status || "Treino registrado"}</span>
   `;
 }
 
@@ -657,7 +798,9 @@ function removeExercise(workoutId, exerciseIndex) {
 function removeWorkout(workoutId) {
   if (!confirm("Deseja excluir este treino?")) return;
 
-  currentUser.workouts = currentUser.workouts.filter(workout => Number(workout.id) !== Number(workoutId));
+  currentUser.workouts = currentUser.workouts.filter(
+    workout => Number(workout.id) !== Number(workoutId)
+  );
 
   openedExerciseKey = null;
 
@@ -685,6 +828,7 @@ function startWorkout() {
   currentWorkout = todayWorkout;
   currentExerciseIndex = 0;
   currentSet = 1;
+  workoutCountedToday = hasWorkoutRegisteredToday();
 
   if (!currentWorkout.exercises.length) {
     alert("Esse treino ainda não tem exercícios cadastrados.");
@@ -695,6 +839,7 @@ function startWorkout() {
 }
 
 function openExercise() {
+  stopRestTimer();
   hideAllScreens();
 
   if (screens.workout) {
@@ -733,12 +878,27 @@ function pauseSet() {
 function finishSet() {
   if (!currentWorkout) return;
 
+  registerFirstSeriesIfNeeded();
+
   const exercise = currentWorkout.exercises[currentExerciseIndex];
 
   startRest(exercise.rest || 0);
 }
 
+function registerFirstSeriesIfNeeded() {
+  if (workoutCountedToday) return;
+
+  registerWorkoutDayOnce(
+    currentWorkout.name || "Treino",
+    "Treino contabilizado a partir da primeira série",
+    false
+  );
+
+  workoutCountedToday = true;
+}
+
 function startRest(seconds) {
+  stopRestTimer();
   hideAllScreens();
 
   if (screens.rest) {
@@ -746,19 +906,22 @@ function startRest(seconds) {
   }
 
   const timer = document.getElementById("restTimer");
+  const restScreen = document.getElementById("restScreen");
+
+  if (restScreen) {
+    restScreen.classList.remove("finished");
+  }
 
   let remaining = Number(seconds) || 0;
 
   timer.innerText = remaining;
 
-  clearInterval(restInterval);
-
   if (remaining <= 0) {
     timer.innerText = "Fim do descanso!";
 
-    setTimeout(() => {
+    restTimeout = setTimeout(() => {
       goNext();
-    }, 1000);
+    }, 800);
 
     return;
   }
@@ -769,32 +932,65 @@ function startRest(seconds) {
     timer.innerText = remaining;
 
     if (remaining <= 0) {
-      clearInterval(restInterval);
+      stopRestTimer(false);
 
-      document.getElementById("restScreen").classList.add("finished");
+      if (restScreen) {
+        restScreen.classList.add("finished");
+      }
 
       timer.innerText = "Fim do descanso!";
 
-      setTimeout(() => {
-        document.getElementById("restScreen").classList.remove("finished");
+      restTimeout = setTimeout(() => {
+        if (restScreen) {
+          restScreen.classList.remove("finished");
+        }
+
         goNext();
-      }, 2000);
+      }, 1200);
     }
   }, 1000);
 }
 
-function goNext() {
-  const exercise = currentWorkout.exercises[currentExerciseIndex];
+function stopRestTimer(removeFinishedClass = true) {
+  if (restInterval) {
+    clearInterval(restInterval);
+    restInterval = null;
+  }
 
-  if (currentSet < exercise.sets) {
-    currentSet++;
-    openExercise();
+  if (restTimeout) {
+    clearTimeout(restTimeout);
+    restTimeout = null;
+  }
+
+  if (removeFinishedClass) {
+    const restScreen = document.getElementById("restScreen");
+
+    if (restScreen) {
+      restScreen.classList.remove("finished");
+    }
+  }
+}
+
+function goNext() {
+  stopRestTimer();
+
+  if (!currentWorkout) {
+    showHome();
     return;
   }
 
-  const confirmChange = confirm("Deseja ir para o próximo exercício?");
+  const exercise = currentWorkout.exercises[currentExerciseIndex];
 
-  if (!confirmChange) {
+  if (!exercise) {
+    finishWorkout();
+    return;
+  }
+
+  const totalSets = Number(exercise.sets) || 1;
+
+  if (currentSet < totalSets) {
+    currentSet++;
+    openExercise();
     return;
   }
 
@@ -806,25 +1002,84 @@ function goNext() {
     return;
   }
 
+  const confirmChange = confirm("Deseja ir para o próximo exercício?");
+
+  if (!confirmChange) {
+    openExercise();
+    return;
+  }
+
   openExercise();
 }
 
 function finishWorkout() {
-  currentUser.history.push({
-    type: currentWorkout.name || "Treino",
-    date: new Date().toLocaleDateString("pt-BR")
-  });
+  stopRestTimer();
+
+  if (!currentWorkout) {
+    showHome();
+    return;
+  }
+
+  registerWorkoutDayOnce(
+    currentWorkout.name || "Treino",
+    "Treino concluído",
+    true
+  );
+
+  const todayItem = findTodayHistoryItem();
+
+  if (todayItem) {
+    todayItem.completed = true;
+    todayItem.status = "Treino concluído";
+    todayItem.type = currentWorkout.name || todayItem.type;
+  }
 
   saveUser();
+
+  currentWorkout = null;
+  currentExerciseIndex = 0;
+  currentSet = 1;
+  workoutCountedToday = false;
 
   alert("Treino concluído 💪");
   showHome();
 }
 
+function finishWorkoutEarly() {
+  stopRestTimer();
+
+  if (currentWorkout) {
+    registerWorkoutDayOnce(
+      currentWorkout.name || "Treino",
+      "Treino registrado parcialmente",
+      false
+    );
+  }
+
+  currentWorkout = null;
+  currentExerciseIndex = 0;
+  currentSet = 1;
+  workoutCountedToday = false;
+
+  alert("Treino registrado. Você já fez o mais importante: começou 💪");
+  showHome();
+}
+
 function registerExtraWorkout(type) {
+  if (hasWorkoutRegisteredToday()) {
+    alert("Hoje já existe um treino registrado. Para manter a meta justa, só contabilizamos um treino por dia.");
+    return;
+  }
+
   currentUser.history.push({
+    id: Date.now(),
     type,
-    date: new Date().toLocaleDateString("pt-BR")
+    date: getTodayDisplayDate(),
+    dateKey: getTodayKey(),
+    status: "Treino registrado manualmente",
+    countsForGoal: true,
+    completed: true,
+    seriesCompleted: 1
   });
 
   saveUser();
@@ -852,6 +1107,8 @@ function loadHistory() {
     div.innerHTML = `
       <strong>${item.type || "Treino"}</strong>
       <span>${item.date || ""}</span>
+      <br>
+      <span>${item.status || "Treino registrado"}</span>
     `;
 
     container.appendChild(div);
@@ -866,6 +1123,12 @@ function loadSettings() {
   document.getElementById("settingsWaterGoal").value = currentUser.waterGoal || "";
   document.getElementById("settingsInitialWeight").value = currentUser.initialWeight || "";
   document.getElementById("settingsGoalWeight").value = currentUser.goalWeight || "";
+
+  const goalInput = document.getElementById("settingsTrainingDaysGoal");
+
+  if (goalInput) {
+    goalInput.value = currentUser.trainingDaysGoal || "";
+  }
 }
 
 function saveSettings() {
@@ -874,6 +1137,12 @@ function saveSettings() {
   currentUser.waterGoal = document.getElementById("settingsWaterGoal").value;
   currentUser.initialWeight = document.getElementById("settingsInitialWeight").value;
   currentUser.goalWeight = document.getElementById("settingsGoalWeight").value;
+
+  const goalInput = document.getElementById("settingsTrainingDaysGoal");
+
+  if (goalInput) {
+    currentUser.trainingDaysGoal = goalInput.value;
+  }
 
   const password = document.getElementById("settingsPassword").value;
 
